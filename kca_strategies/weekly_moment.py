@@ -10,14 +10,14 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-start_date = '2014-04-01'
-end_date = '2024-11-09'
+start_date = '2008-04-01'
+end_date = '2024-04-01'
 capital = 50000
 country_code = ".NS"
 tp_pct = 0.15
 sl_pct = -0.05
-max_holding_period = 20
-invested = 10000
+max_holding_period = 9
+invested = capital / 6
 
 stock_universe = list(pd.read_html('https://en.wikipedia.org/wiki/NIFTY_50')[1]['Symbol'])
 
@@ -56,7 +56,8 @@ losses = 0
 pnl = 0
 pnl_array = []
 portfolio = [capital]
-
+weeks_held = []
+min_pct_for_zero = 0.9
 
 for max_data in max_date_stock_pct_array:
     max_start_date = max_data[0]
@@ -68,8 +69,12 @@ for max_data in max_date_stock_pct_array:
 
     close = 0
     last_change = 0
-
+    invested = capital / 6
     print("Analyzing: ", max_stock)
+    print("Invested", invested)
+    weekss = 0
+
+    max_pct_reached = 0
     for week in range(1, max_holding_period + 1):
         current_date = max_start_date + pd.Timedelta(weeks = week)
         
@@ -97,8 +102,10 @@ for max_data in max_date_stock_pct_array:
             losses += 1
             close = 1
             break
-            
+
+        weekss += 1
         last_change = change
+        max_pct_reached = max(change, max_pct_reached)
     
     if (close == 0):
         if last_change > 0: profits += 1
@@ -107,11 +114,16 @@ for max_data in max_date_stock_pct_array:
         capital += invested * last_change
         print("Booked for days thresh")
     
+    
+    print("Max pct reached: ", max_pct_reached)
     pnl_array.append(pnl)
     portfolio.append(capital)
+    weeks_held.append(weekss)
 
     print("Final PNL: ", pnl)
     print("----------------------------------------------------------------------------")
+
+print('Final Capital' , capital)
 
 df_nifty = (yf.download('^NSEI', start = start_date, end = end_date, interval='1wk')['Close'])
 df_nifty["pct_change"] = df_nifty.pct_change()
@@ -138,3 +150,6 @@ plt.xlabel("Time", color="white")
 plt.ylabel("PnL", color="white")
 plt.legend()
 plt.show()
+
+print(weeks_held)
+print(np.mean(weeks_held))
