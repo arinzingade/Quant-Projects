@@ -5,6 +5,8 @@ My approach involved developing a system that allows for simultaneous analysis o
 
 So essentially, you can stop at any time in the simulation and see the important prices - volume profile - market profile for that point in time, rather than making it static for the whole week, I wanted to make it more dynamic and flexible, as if real time trades were to be taken in the week.
 
+![simulation](https://github.com/user-attachments/assets/2502ddb9-350a-4246-88d2-090a569db351)
+
 ### Definition of Important Price
 
 In this analysis, an "important price" is determined by identifying peaks within the market profile distribution, which are further validated by corresponding volume levels. This approach relies on the concept that significant price levels are characterized by heightened trading activity, indicating areas of strong buyer or seller interest.
@@ -37,4 +39,6 @@ Despite the low-impact economic news for the week of May 27, 2024, markets conti
 Key economic indicators, like Germany’s Ifo Business Climate, U.S. consumer confidence, and the U.S. GDP growth revision, largely painted a picture of modest growth and controlled inflation without major surprises. However, the steady declines in both consumer and business sentiment, coupled with persistently cautious Fed rhetoric, seemed to weigh on the markets. The underwhelming PMI figures from China, signaling slower manufacturing activity, further fueled fears of a global economic slowdown.
 
 Without any positive economic catalysts, traders seemed to lean toward a risk-off sentiment, resulting in a steady decline across various asset classes. This ongoing sell-off highlighted the market’s sensitivity to any hint of global slowdown, amplified by concerns about sticky inflation, high interest rates, and geopolitical uncertainties. The continuous downward trend suggested that, even with no major disruptions, underlying worries about future growth prospects and tighter financial conditions dominated investor sentiment, pushing markets lower through the week.
+
+
 
