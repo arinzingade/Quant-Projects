@@ -39,5 +39,5 @@ if __name__ == "__main__":
     
     fetch_positions(1, 'BTCUSDT', 'OPEN')
     
-    #close_all_positions(1)
-    #cancel_all_orders(1)
+    close_all_positions(1)
+    cancel_all_orders(1)

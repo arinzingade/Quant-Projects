@@ -44,6 +44,8 @@ async def on_order_filled(data):  # Accept data parameter
     
     client_order_id = data.get('clientOrderId')
 
+    print(type_order)
+
     if client_order_id:
         print(f"Order filled: {client_order_id}")
         counter_order_id = redis_client.get(client_order_id)
@@ -59,25 +61,29 @@ async def on_order_filled(data):  # Accept data parameter
             print("-------------------------------------------------------------------------------")
         else:
             print("No counter order found.")
+
     
     if SWITCH==1:
 
-        if order_side == 'BUY' and type_order == 'LIMIT':
+        if order_side == 'BUY':
             #place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_LIMIT')
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_MARKET')
             # place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_LIMIT')
+            print('Opening BUY side positions')
             
-        elif order_side == 'SELL' and type_order == 'LIMIT':
+        elif order_side == 'SELL':
             #place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_LIMIT')
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_MARKET')
             #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_LIMIT')
+            print('Opening SELL side positions')
 
         SWITCH = 0
     
     else:
+        
         place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL', 'LIMIT')
+        print('OPENING LIMIT ORDER POSITIONS')
         SWITCH = 1
-
 
 # Event handler for receiving a partially filled order update
 @sio.on('orderPartiallyFilled', namespace=namespace_path)
