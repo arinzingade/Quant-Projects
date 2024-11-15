@@ -1,9 +1,12 @@
 
 import socketio
 import asyncio
-from generate_listen import create_or_update_listen_key, place_order
+from generate_listen import create_or_update_listen_key
+from helpers import place_order, get_current_price
 import redis
 from helpers import delete_order
+
+from main import upper_pct, lower_pct, place_bracket_limit_orders
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -37,6 +40,16 @@ async def on_order_filled(data):  # Accept data parameter
     
     client_order_id = data.get('clientOrderId')
 
+    if order_side == 'BUY':
+        place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
+        place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL', True)
+        place_bracket_limit_orders(1,symbol, qty, upper_pct, lower_pct, 'BUY', True)
+
+    else:
+        place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
+        place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY', True)
+        place_bracket_limit_orders(1,symbol, qty, upper_pct, lower_pct, 'SELL', True)
+
     if client_order_id:
         print(f"Order filled: {client_order_id}")
         counter_order_id = redis_client.get(client_order_id)
@@ -49,6 +62,7 @@ async def on_order_filled(data):  # Accept data parameter
             redis_client.delete(client_order_id)
             redis_client.delete(counter_order_id)
 
+            print("-------------------------------------------------------------------------------")
         else:
             print("No counter order found.")
 

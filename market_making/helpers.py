@@ -19,14 +19,14 @@ def info_account_1():
 
 def info_account_2():
     api_key_account_2 = os.getenv('API_KEY_ACCOUNT_2')
-    api_secret_account_2 = os.getenv('API_KEY_ACCOUNT_2')
+    api_secret_account_2 = os.getenv('API_SECRET_ACCOUNT_2')
 
     return api_key_account_2, api_secret_account_2
 
 def generate_signature(api_secret, data_to_sign):
     return hmac.new(api_secret.encode('utf-8'), data_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
 
-def place_order(account_number, symbol, limit_price, order_type, quantity, side):
+def place_order(account_number, symbol, limit_price, order_type, quantity, side, reduce_only):
 
     if account_number == 1:
         api_key, api_secret = info_account_1()
@@ -44,7 +44,7 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side)
         'side': side,                
         'symbol': symbol,          
         'type': order_type,             
-        'reduceOnly': False,          
+        'reduceOnly': reduce_only,          
         'marginAsset': 'INR',          
         'deviceType': 'WEB',          
         'userCategory': 'EXTERNAL',    
