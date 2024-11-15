@@ -3,16 +3,16 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+from datetime import datetime
 import warnings
 
 import warnings
 warnings.filterwarnings("ignore")
 
 
-start_date = '2008-04-01'
-end_date = '2024-04-01'
-capital = 50000
+start_date = '2024-04-01'
+end_date = datetime.now().strftime('%Y-%m-%d')
+capital = 100000
 country_code = ".NS"
 tp_pct = 0.15
 sl_pct = -0.05
@@ -140,8 +140,6 @@ for i in range(1, len(pct_change_portfolio)):
     current_port = (1 + pct_change_portfolio[i]) * scaled_portfolio[i-1]
     scaled_portfolio.append(current_port)
 
-import matplotlib.pyplot as plt
-
 plt.style.use("dark_background")
 plt.plot(scaled_portfolio, color="yellow", label="KCA")  
 plt.plot(scaled_nifty, color="green", label="NIFTY")
@@ -153,3 +151,5 @@ plt.show()
 
 print(weeks_held)
 print(np.mean(weeks_held))
+
+print("Max Stock:", max_date_stock_pct_array[len(max_date_stock_pct_array) - 1])
