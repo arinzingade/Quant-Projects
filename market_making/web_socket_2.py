@@ -11,7 +11,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 server_url = 'https://fawss.pi42.com/'
 
 # Namespace path for authorized streaming
-listen_key = create_or_update_listen_key(1)
+listen_key = create_or_update_listen_key(account_number = 2)
 namespace_path = '/auth-stream/' + listen_key
 
 # Create a new asynchronous Socket.IO client
