@@ -4,18 +4,22 @@ import hmac
 import hashlib
 import json
 import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 base_url = "https://fapi.pi42.com/"
 
 def info_account_1():
-    api_key_account_1 = "539bc7c95f5fb7fd9509d431d22f94f7"
-    api_secret_account_1 = "925700449fd74875d6104c8ff1c170f2"
+    api_key_account_1 = os.getenv('API_KEY_ACCOUNT_1')
+    api_secret_account_1 = os.getenv('API_SECRET_ACCOUNT_1')
 
     return api_key_account_1, api_secret_account_1
 
 def info_account_2():
-    api_key_account_2 = "ae4f424a012d650177741f79fbadc7d7"
-    api_secret_account_2 = "39144059929d190db460d373b4cf7aa9"
+    api_key_account_2 = os.getenv('API_KEY_ACCOUNT_2')
+    api_secret_account_2 = os.getenv('API_KEY_ACCOUNT_2')
 
     return api_key_account_2, api_secret_account_2
 

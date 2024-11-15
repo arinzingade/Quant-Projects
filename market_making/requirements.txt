@@ -3,3 +3,4 @@ redis
 python-socketio 
 asyncio 
 aiohttp
+python-dotenv
