@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+  
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python_app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "80:80"
+    command: ["python", "web_socket_1.py"] 
