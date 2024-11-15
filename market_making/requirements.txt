@@ -1,0 +1,5 @@
+
+redis
+python-socketio 
+asyncio 
+aiohttp
