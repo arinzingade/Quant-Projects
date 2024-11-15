@@ -17,6 +17,8 @@ server_url = 'https://fawss.pi42.com/'
 listen_key = create_or_update_listen_key(1)
 namespace_path = '/auth-stream/' + listen_key
 
+SWITCH = 1
+
 # Create a new asynchronous Socket.IO client
 sio = socketio.AsyncClient()
 
@@ -33,22 +35,14 @@ async def disconnect():
 # Event handler for receiving an order filled notification
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
+    global SWITCH
+
     order_side = data.get('side')
     symbol = data.get('symbol')
-    limit_price = 0
     qty = data.get('orderAmount')
+    type_order = data.get('type')
     
     client_order_id = data.get('clientOrderId')
-
-    if order_side == 'BUY':
-        place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
-        place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL', True)
-        place_bracket_limit_orders(1,symbol, qty, upper_pct, lower_pct, 'BUY', True)
-
-    else:
-        place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
-        place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY', True)
-        place_bracket_limit_orders(1,symbol, qty, upper_pct, lower_pct, 'SELL', True)
 
     if client_order_id:
         print(f"Order filled: {client_order_id}")
@@ -65,6 +59,24 @@ async def on_order_filled(data):  # Accept data parameter
             print("-------------------------------------------------------------------------------")
         else:
             print("No counter order found.")
+    
+    if SWITCH==1:
+
+        if order_side == 'BUY' and type_order == 'LIMIT':
+            #place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_LIMIT')
+            # place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_LIMIT')
+            
+        elif order_side == 'SELL' and type_order == 'LIMIT':
+            #place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_LIMIT')
+            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_LIMIT')
+
+        SWITCH = 0
+    
+    else:
+        place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL', 'LIMIT')
+        SWITCH = 1
 
 
 # Event handler for receiving a partially filled order update

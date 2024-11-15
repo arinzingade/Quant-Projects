@@ -49,6 +49,7 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
         'deviceType': 'WEB',          
         'userCategory': 'EXTERNAL',    
         'price': limit_price,         
+        'stopPrice': limit_price,
     }
 
     data_to_sign = json.dumps(params, separators=(',', ':'))
@@ -228,3 +229,104 @@ def delete_order(account_number, client_order_id):
         print(f"Order with clientOrderId {client_order_id} deleted successfully.")
     except requests.exceptions.HTTPError as err:
         print(f"Failed {response.status_code}: {response.text}")
+
+
+# Function to fetch positions
+def fetch_positions(account_number, ticker, open_position_status):
+    if account_number == 1:
+        api_key, api_secret = info_account_1()
+
+    elif account_number == 2:
+        api_key, api_secret = info_account_2()
+
+    position_status = open_position_status
+    symbol = ticker
+
+    if position_status not in ["OPEN", "CLOSED", "LIQUIDATED"]:
+        print("Invalid position status. Please enter 'open', 'closed', or 'liquidated'.")
+        return
+
+    # Optional parameters
+    sort_order = "desc" # Default sort order
+    page_size = 100 # Default page size
+
+    # Prepare the query parameters
+    params = {
+    'sortOrder': sort_order,
+    'pageSize': str(page_size),
+    'symbol': symbol,
+    }
+
+    # Generate current timestamp
+    timestamp = str(int(time.time() * 1000))
+    params['timestamp'] = timestamp
+
+    # Generate signature based on the parameters
+    query_string = '&'.join([f"{key}={value}" for key, value in params.items()])
+    signature = generate_signature(api_secret, query_string)
+
+    # Headers for the GET request
+    headers = {
+    'api-key': api_key,
+    'signature': signature,
+    'accept': '*/*'
+    }
+
+    # Construct the full URL including the path parameter for position status
+    full_url = f"{base_url}/v1/positions/{position_status}?{query_string}"
+
+    try:
+    # Send the GET request to fetch positions
+        response = requests.get(full_url, headers=headers)
+        response.raise_for_status() # Raises an error for 4xx/5xx responses
+        response_data = response.json()
+        print('Positions fetched successfully:', json.dumps(response_data, indent=4))
+    except requests.exceptions.HTTPError as err:
+        print(f"Error: {err.response.text if err.response else err}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
+
+
+def close_all_positions(account_number):
+    if account_number == 1:
+        api_key, api_secret = info_account_1()
+
+    elif account_number == 2:
+        api_key, api_secret = info_account_2()
+
+    endpoint = "/v1/positions/close-all-positions"
+
+    # Generate the current timestamp
+    timestamp = str(int(time.time() * 1000))
+
+    # Prepare the request payload
+    params = {
+        'timestamp': timestamp
+    }
+
+    # Convert the request body to a JSON string for signing
+    data_to_sign = json.dumps(params, separators=(',', ':'))
+
+    # Generate the signature (ensure `generate_signature` is properly defined)
+    signature = generate_signature(api_secret, data_to_sign)
+
+    # Headers for the DELETE request
+    headers = {
+        'api-key': api_key,
+        'Content-Type': 'application/json',
+        'signature': signature
+    }
+
+    # Construct the full URL
+    cancel_orders_url = f"{base_url}{endpoint}"
+
+    try:
+        # Send the DELETE request to cancel all orders
+        response = requests.delete(cancel_orders_url, json=params, headers=headers)
+        response.raise_for_status()  # Raises an error for 4xx/5xx responses
+        response_data = response.json()
+        print('All orders canceled successfully:', json.dumps(response_data, indent=4))
+    except requests.exceptions.HTTPError as err:
+        print(f"Failed {response.status_code}: {response.text}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {str(e)}")
