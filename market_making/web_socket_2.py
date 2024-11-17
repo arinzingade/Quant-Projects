@@ -1,7 +1,7 @@
 
 import socketio
 import asyncio
-from generate_listen import create_or_update_listen_key
+from generate_listen import create_or_update_listen_key, update_listen_key_expiry
 import redis
 from helpers import delete_order
 
@@ -44,6 +44,8 @@ async def on_order_filled(data):  # Accept data parameter
             redis_client.delete(counter_order_id)
         else:
             print("No counter order found.")
+    
+    update_listen_key_expiry(2)
 
 
 # Event handler for receiving a partially filled order update

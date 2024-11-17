@@ -1,7 +1,7 @@
 
 import socketio
 import asyncio
-from generate_listen import create_or_update_listen_key
+from generate_listen import create_or_update_listen_key, update_listen_key_expiry
 from helpers import place_order, get_current_price
 import redis
 from helpers import delete_order
@@ -67,23 +67,25 @@ async def on_order_filled(data):  # Accept data parameter
 
         if order_side == 'BUY':
             #place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_MARKET')
-            # place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_LIMIT')
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY')
+            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL')
             print('Opening BUY side positions')
             
         elif order_side == 'SELL':
             #place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL', 'STOP_MARKET')
-            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY', 'STOP_LIMIT')
+            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL')
+            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY')
             print('Opening SELL side positions')
 
         SWITCH = 0
     
     else:
         
-        place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL', 'LIMIT')
+        place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
         print('OPENING LIMIT ORDER POSITIONS')
         SWITCH = 1
+    
+    update_listen_key_expiry(1)
 
 # Event handler for receiving a partially filled order update
 @sio.on('orderPartiallyFilled', namespace=namespace_path)

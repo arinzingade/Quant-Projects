@@ -46,3 +46,34 @@ def create_or_update_listen_key(account_number):
     except requests.exceptions.HTTPError as err:
         print(f"Failed {response.status_code}: {response.text}")
 
+
+def update_listen_key_expiry(account_number):
+    if account_number == 1:
+        api_key, api_secret = info_account_1()
+
+    elif account_number == 2:
+        api_key, api_secret = info_account_2()
+
+    timestamp = str(int(time.time() * 1000))
+
+    params = {
+        'timestamp': timestamp
+    }
+
+    data_to_sign = json.dumps(params, separators=(',', ':'))
+
+    # Generate the signature using the provided helper function
+    signature = generate_signature(api_secret, data_to_sign)
+
+    # Headers for the PUT request
+    headers = {
+        'api-key': api_key,
+        'signature': signature,
+    }
+
+    try:
+        # Send the PUT request to update the listen key expiry
+        response = requests.put(listen_key_url, json=params, headers=headers)
+        print('Listen key expiry updated successfully:', response)
+    except Exception as e:
+        print(f"Failed {response.status_code}: {response.text}")
