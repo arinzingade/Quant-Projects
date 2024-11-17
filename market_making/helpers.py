@@ -50,20 +50,58 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     
     timestamp = str(int(time.time() * 1000))
 
-    params = {
-        'timestamp': timestamp,       
-        'placeType': 'ORDER_FORM',   
-        'quantity': quantity,            
-        'side': side,                
-        'symbol': symbol,          
-        'type': order_type,             
-        'reduceOnly': reduce_only,          
-        'marginAsset': 'INR',          
-        'deviceType': 'WEB',          
-        'userCategory': 'EXTERNAL',    
-        'price': limit_price,         
-        'stopPrice': limit_price,
-    }
+    
+
+    if order_type == 'LIMIT' or 'STOP_MARKET':
+        params = {
+            'timestamp': timestamp,       
+            'placeType': 'ORDER_FORM',   
+            'quantity': quantity,            
+            'side': side,                
+            'symbol': symbol,          
+            'type': order_type,             
+            'reduceOnly': reduce_only,          
+            'marginAsset': 'INR',          
+            'deviceType': 'WEB',          
+            'userCategory': 'EXTERNAL',    
+            'price': limit_price,         
+            'stopPrice': limit_price,
+        }
+    
+    
+    elif order_type == 'STOP_LIMIT':
+        limit_price_diff = 50
+
+        if side == 'BUY':
+            stop_price = limit_price 
+            limit_price += limit_price_diff
+
+            print(side)
+            print("TRIGGER BUY", stop_price)
+            print("LIMIT BUY", limit_price)
+
+        else:
+            stop_price = limit_price 
+            limit_price -= limit_price_diff 
+
+            print(side)
+            print("TRIGGER SELL", stop_price)
+            print("LIMIT SELL", limit_price)
+            
+        params = {
+            'timestamp': timestamp,       
+            'placeType': 'ORDER_FORM',   
+            'quantity': quantity,            
+            'side': side,                
+            'symbol': symbol,          
+            'type': order_type,             
+            'reduceOnly': reduce_only,          
+            'marginAsset': 'INR',          
+            'deviceType': 'WEB',          
+            'userCategory': 'EXTERNAL',    
+            
+            'stopPrice': stop_price,
+        }
 
     data_to_sign = json.dumps(params, separators=(',', ':'))
     signature = generate_signature(api_secret, data_to_sign)
@@ -74,7 +112,7 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     }
 
     try:
-        print(f'{base_url}v1/order/place-order')
+        
         response = requests.post(f'{base_url}v1/order/place-order', json=params, headers=headers)
 
         response.raise_for_status()

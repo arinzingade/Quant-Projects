@@ -62,7 +62,6 @@ async def on_order_filled(data):  # Accept data parameter
         else:
             print("No counter order found.")
 
-    
     if SWITCH==1:
 
         if order_side == 'BUY':
@@ -84,8 +83,7 @@ async def on_order_filled(data):  # Accept data parameter
         place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
         print('OPENING LIMIT ORDER POSITIONS')
         SWITCH = 1
-    
-    update_listen_key_expiry(1)
+
 
 # Event handler for receiving a partially filled order update
 @sio.on('orderPartiallyFilled', namespace=namespace_path)
