@@ -23,6 +23,19 @@ def info_account_2():
 
     return api_key_account_2, api_secret_account_2
 
+def custom_round_to_10_not_5(number):
+    rem = number % 10
+
+    if rem == 5:
+        return number
+    if rem < 5:
+        number -= rem
+        return number
+    if rem > 5:
+        number += (10- rem)
+        return number
+
+
 def generate_signature(api_secret, data_to_sign):
     return hmac.new(api_secret.encode('utf-8'), data_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
 
@@ -61,11 +74,14 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     }
 
     try:
-        response = requests.post(f'{base_url}/v1/order/place-order', json=params, headers=headers)
+        print(f'{base_url}v1/order/place-order')
+        response = requests.post(f'{base_url}v1/order/place-order', json=params, headers=headers)
 
         response.raise_for_status()
 
         response_data = response.json()
+
+        print("Placed", side, order_type, "at", response_data['price'])
         return response_data
 
     except requests.exceptions.HTTPError as err:
@@ -330,3 +346,5 @@ def close_all_positions(account_number):
         print(f"Failed {response.status_code}: {response.text}")
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
+
+
