@@ -2,11 +2,11 @@
 import socketio
 import asyncio
 from generate_listen import create_or_update_listen_key, update_listen_key_expiry
-from helpers import place_order, get_current_price
+from helpers import place_order, get_current_price, close_all_positions, cancel_all_orders
 import redis
 from helpers import delete_order
 
-from main import upper_pct, lower_pct, place_bracket_limit_orders
+from main import upper_pct, lower_pct, place_bracket_limit_orders, symbol, qty
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -18,9 +18,11 @@ listen_key = create_or_update_listen_key(1)
 namespace_path = '/auth-stream/' + listen_key
 
 SWITCH = 1
+CYCLE=1
 
 # Create a new asynchronous Socket.IO client
 sio = socketio.AsyncClient()
+
 
 # Event listener for a successful connection to the server
 @sio.event
@@ -32,10 +34,14 @@ async def connect():
 async def disconnect():
     print('Disconnected from the WebSocket server')
 
+#execution_lock = asyncio.Lock()
 # Event handler for receiving an order filled notification
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
     global SWITCH
+    global CYCLE
+
+    print("Cycle Number is: ", CYCLE)
 
     order_side = data.get('side')
     symbol = data.get('symbol')
@@ -65,15 +71,15 @@ async def on_order_filled(data):  # Accept data parameter
     if SWITCH==1:
 
         if order_side == 'BUY':
-            #place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
+            place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
             place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY')
-            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL')
+            place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL')
             print('Opening BUY side positions')
             
         elif order_side == 'SELL':
-            #place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
+            place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
             place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL')
-            #place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY')
+            place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY')
             print('Opening SELL side positions')
 
         SWITCH = 0
@@ -82,6 +88,7 @@ async def on_order_filled(data):  # Accept data parameter
         
         place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
         print('OPENING LIMIT ORDER POSITIONS')
+        CYCLE += 1
         SWITCH = 1
 
 
@@ -103,6 +110,22 @@ async def on_order_failed(data):
     client_order_id = data.get('clientOrderId')
     print("Order FAILED for ID: ", client_order_id)
 
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    print("ALL POSITIONS CANCELLED AND CLOSED")
+
+    print("RESTARTING THE PROCESS")
+
+    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+    
 # Event handler for receiving a new order(TP/SL) notification
 @sio.on('newOrder', namespace=namespace_path)
 async def on_new_order(data):
@@ -130,7 +153,28 @@ async def on_new_trade(data):
 # Event handler for session expiration notifications
 @sio.on('sessionExpired', namespace=namespace_path)
 async def on_session_expired(data):
-    print("Session expired:", data)
+        
+    print("SEESION FOR WEB SOCKET 1 HAS EXPIRED.")
+    
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    print("ALL POSITIONS CANCELLED AND CLOSED")
+
+    print("RESTARTING THE PROCESS")
+
+    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+    
+    print("-------------------------------------")
+    print("Process Restarted.")
+    print("-------------------------------------")
 
 # Event listener for connection errors
 @sio.event

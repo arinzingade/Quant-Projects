@@ -8,9 +8,9 @@ from helpers import (place_order, get_current_price,
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
-upper_pct = 0.00025
-lower_pct = 0.00025
-qty = 0.01
+upper_pct = 0.001
+lower_pct = 0.001
+qty = 0.002
 symbol = 'BTCUSDT'
 
 def place_bracket_limit_orders(account_number, symbol, qty, upper_pct, lower_pct, side):
@@ -25,7 +25,7 @@ def place_bracket_limit_orders(account_number, symbol, qty, upper_pct, lower_pct
     print(f'Spread is accepted at the value: {upper_limit_price - lower_limit_price}')
 
     if side == 'NEUTRAL':
-        order_1_info = place_order(account_number, symbol, upper_limit_price, 'MARKET', qty, 'SELL', False)
+        order_1_info = place_order(account_number, symbol, upper_limit_price, 'LIMIT', qty, 'SELL', False)
         order_2_info = place_order(account_number, symbol, lower_limit_price, 'LIMIT', qty, 'BUY', False)
 
     elif side == 'BUY':
@@ -45,8 +45,7 @@ def place_bracket_limit_orders(account_number, symbol, qty, upper_pct, lower_pct
 if __name__ == "__main__":
     #place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
     get_open_orders(1)
+    get_open_orders(2)
     
     fetch_positions(1, 'BTCUSDT', 'OPEN')
-    
-    close_all_positions(1)
-    cancel_all_orders(1)
+    fetch_positions(2, 'BTCUSDT', 'OPEN')
