@@ -50,7 +50,10 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     
     timestamp = str(int(time.time() * 1000))
 
-    
+    print("------------------------------------------------------------------")
+    print("Handling Account: ", account_number)
+    print("API KEY: ", api_key)
+    print('API SECRET: ', api_secret)
 
     if order_type == 'LIMIT' or 'STOP_MARKET':
         params = {

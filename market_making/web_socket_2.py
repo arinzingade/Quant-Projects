@@ -4,6 +4,8 @@ import asyncio
 from generate_listen import create_or_update_listen_key, update_listen_key_expiry
 import redis
 from helpers import delete_order
+from main import upper_pct, lower_pct, place_bracket_limit_orders, symbol, qty
+from helpers import place_order, get_current_price, close_all_positions, cancel_all_orders
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 
@@ -11,7 +13,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 server_url = 'https://fawss.pi42.com/'
 
 # Namespace path for authorized streaming
-listen_key = create_or_update_listen_key(account_number = 2)
+listen_key = create_or_update_listen_key(2)
 namespace_path = '/auth-stream/' + listen_key
 
 # Create a new asynchronous Socket.IO client
@@ -38,7 +40,7 @@ async def on_order_filled(data):  # Accept data parameter
         if counter_order_id:
             counter_order_id = counter_order_id.decode('utf-8')
             print(f"Counter order {counter_order_id} found. Cancelling it.")
-            delete_order(1, counter_order_id)
+            delete_order(2, counter_order_id)
 
             redis_client.delete(client_order_id)
             redis_client.delete(counter_order_id)
@@ -63,6 +65,22 @@ async def on_order_cancelled(data):
 async def on_order_failed(data):
     client_order_id = data.get('clientOrderId')
     print("Order FAILED for ID: ", client_order_id)
+
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    print("ALL POSITIONS CANCELLED AND CLOSED")
+
+    print("RESTARTING THE PROCESS")
+
+    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
 
 # Event handler for receiving a new order(TP/SL) notification
 @sio.on('newOrder', namespace=namespace_path)
@@ -91,7 +109,28 @@ async def on_new_trade(data):
 # Event handler for session expiration notifications
 @sio.on('sessionExpired', namespace=namespace_path)
 async def on_session_expired(data):
-    print("Session expired:", data)
+    
+    print("SEESION FOR WEB SOCKET 2 HAS EXPIRED.")
+    
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    close_all_positions(1)
+    cancel_all_orders(1)
+    close_all_positions(2)
+    cancel_all_orders(2)
+
+    print("ALL POSITIONS CANCELLED AND CLOSED")
+
+    print("RESTARTING THE PROCESS")
+
+    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+    
+    print("-------------------------------------")
+    print("Process Restarted.")
+    print("-------------------------------------")
 
 # Event listener for connection errors
 @sio.event
