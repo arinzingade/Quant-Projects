@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 80
 
-CMD python web_socket_1.py && python web_socket_2.py && python main.py
+CMD ["python", "init.py"]

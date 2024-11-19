@@ -2,10 +2,10 @@ import socketio
 import asyncio
 from helpers import place_order, get_current_price, delete_order
 from generate_listen import create_or_update_listen_key, update_listen_key_expiry
-import redis
+from redis.asyncio import Redis
 
 # Redis client setup
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
 # WebSocket server URL
 server_url = 'https://fawss.pi42.com/'
