@@ -50,61 +50,20 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     
     timestamp = str(int(time.time() * 1000))
 
-    print("------------------------------------------------------------------")
-    print("Handling Account: ", account_number)
-    print("API KEY: ", api_key)
-    print('API SECRET: ', api_secret)
-
-    if order_type == 'LIMIT' or 'STOP_MARKET':
-        params = {
-            'timestamp': timestamp,       
-            'placeType': 'ORDER_FORM',   
-            'quantity': quantity,            
-            'side': side,                
-            'symbol': symbol,          
-            'type': order_type,             
-            'reduceOnly': reduce_only,          
-            'marginAsset': 'INR',          
-            'deviceType': 'WEB',          
-            'userCategory': 'EXTERNAL',    
-            'price': limit_price,         
-            'stopPrice': limit_price,
-        }
-    
-    
-    elif order_type == 'STOP_LIMIT':
-        limit_price_diff = 50
-
-        if side == 'BUY':
-            stop_price = limit_price 
-            limit_price += limit_price_diff
-
-            print(side)
-            print("TRIGGER BUY", stop_price)
-            print("LIMIT BUY", limit_price)
-
-        else:
-            stop_price = limit_price 
-            limit_price -= limit_price_diff 
-
-            print(side)
-            print("TRIGGER SELL", stop_price)
-            print("LIMIT SELL", limit_price)
-            
-        params = {
-            'timestamp': timestamp,       
-            'placeType': 'ORDER_FORM',   
-            'quantity': quantity,            
-            'side': side,                
-            'symbol': symbol,          
-            'type': order_type,             
-            'reduceOnly': reduce_only,          
-            'marginAsset': 'INR',          
-            'deviceType': 'WEB',          
-            'userCategory': 'EXTERNAL',    
-            
-            'stopPrice': stop_price,
-        }
+    params = {
+        'timestamp': timestamp,       
+        'placeType': 'ORDER_FORM',   
+        'quantity': quantity,            
+        'side': side,                
+        'symbol': symbol,          
+        'type': order_type,             
+        'reduceOnly': reduce_only,          
+        'marginAsset': 'INR',          
+        'deviceType': 'WEB',          
+        'userCategory': 'EXTERNAL',    
+        'price': limit_price,         
+        'stopPrice': limit_price,
+    }
 
     data_to_sign = json.dumps(params, separators=(',', ':'))
     signature = generate_signature(api_secret, data_to_sign)
@@ -117,12 +76,14 @@ def place_order(account_number, symbol, limit_price, order_type, quantity, side,
     try:
         
         response = requests.post(f'{base_url}v1/order/place-order', json=params, headers=headers)
-
         response.raise_for_status()
-
         response_data = response.json()
 
-        print("Placed", side, order_type, "at", response_data['price'])
+        order_type = response_data['type']
+        order_side = response_data['side']
+        price = response_data['price']
+
+        print(" ", account_number, " | ", "Placed", order_side, order_type, "at: ", price )
         return response_data
 
     except requests.exceptions.HTTPError as err:
@@ -387,5 +348,4 @@ def close_all_positions(account_number):
         print(f"Failed {response.status_code}: {response.text}")
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
-
 

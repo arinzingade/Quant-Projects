@@ -1,28 +1,30 @@
 
 import socketio
 import asyncio
-from generate_listen import create_or_update_listen_key, update_listen_key_expiry
-from helpers import place_order, get_current_price, close_all_positions, cancel_all_orders
+from generate_listen import create_or_update_listen_key
+from async_helpers import place_order, place_bracket_limit_orders, cancel_counter_order
 import redis
-from helpers import delete_order
+from helpers import cancel_all_orders, close_all_positions
+import time
+from main import upper_pct, lower_pct, symbol, qty
+from redis.asyncio import Redis
+import winsound
 
-from main import upper_pct, lower_pct, place_bracket_limit_orders, symbol, qty
-
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
 # WebSocket server URL (without namespace)
 server_url = 'https://fawss.pi42.com/'
 
 # Namespace path for authorized streaming
+lock = asyncio.Lock()
 listen_key = create_or_update_listen_key(1)
 namespace_path = '/auth-stream/' + listen_key
 
 SWITCH = 1
-CYCLE=1
+CYCLE = 0
 
 # Create a new asynchronous Socket.IO client
 sio = socketio.AsyncClient()
-
 
 # Event listener for a successful connection to the server
 @sio.event
@@ -32,64 +34,56 @@ async def connect():
 # Event listener for when the connection to the server is closed
 @sio.event
 async def disconnect():
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
     print('Disconnected from the WebSocket server')
 
-#execution_lock = asyncio.Lock()
-# Event handler for receiving an order filled notification
+
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
     global SWITCH
     global CYCLE
 
-    print("Cycle Number is: ", CYCLE)
+    async with lock:
+        client_order_id = data.get('clientOrderId')
+        await cancel_counter_order(1, client_order_id)
 
-    order_side = data.get('side')
-    symbol = data.get('symbol')
-    qty = data.get('orderAmount')
-    type_order = data.get('type')
-    
-    client_order_id = data.get('clientOrderId')
+        order_side = data.get('side')
 
-    print(type_order)
-
-    if client_order_id:
-        print(f"Order filled: {client_order_id}")
-        counter_order_id = redis_client.get(client_order_id)
-
-        if counter_order_id:
-            counter_order_id = counter_order_id.decode('utf-8')
-            print(f"Counter order {counter_order_id} found. Cancelling it.")
-            delete_order(1, counter_order_id)
-
-            redis_client.delete(client_order_id)
-            redis_client.delete(counter_order_id)
-
-            print("-------------------------------------------------------------------------------")
-        else:
-            print("No counter order found.")
-
-    if SWITCH==1:
-
-        if order_side == 'BUY':
-            place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY')
-            place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'SELL')
-            print('Opening BUY side positions')
-            
-        elif order_side == 'SELL':
-            place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False)
-            place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL')
-            place_bracket_limit_orders(2,symbol, qty, upper_pct, lower_pct, 'BUY')
-            print('Opening SELL side positions')
-
-        SWITCH = 0
-    
-    else:
+        if SWITCH == 1:
+            if order_side == 'BUY':
+                # Execute the two functions concurrently
+                start_time = time.time() 
+                await asyncio.gather(
+                    place_order(2, symbol, 0, 'MARKET', qty, 'SELL', False),
+                    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'BUY'),
+                    place_bracket_limit_orders(2, symbol, qty, upper_pct, lower_pct, 'SELL')
+                )
+                end_time = time.time()  # Capture the end time
         
-        place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
-        print('OPENING LIMIT ORDER POSITIONS')
-        CYCLE += 1
-        SWITCH = 1
+                time_taken = end_time - start_time  # Calculate the time taken
+                print(f"Time taken to complete the orders: {time_taken:.2f} seconds")
+
+            elif order_side == 'SELL':
+                # Execute the two functions concurrently
+                start_time = time.time() 
+                await asyncio.gather(
+                    place_order(2, symbol, 0, 'MARKET', qty, 'BUY', False),
+                    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'SELL'),
+                    place_bracket_limit_orders(2, symbol, qty, upper_pct, lower_pct, 'BUY')
+                )
+                end_time = time.time()
+                time_taken = end_time - start_time  # Calculate the time taken
+                print(f"Time taken to complete the orders: {time_taken:.2f} seconds")
+
+            SWITCH = 0
+
+        else:
+            # Execute the bracket limit orders concurrently
+            await place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+            CYCLE += 1
+            SWITCH = 1
 
 
 # Event handler for receiving a partially filled order update
@@ -110,19 +104,25 @@ async def on_order_failed(data):
     client_order_id = data.get('clientOrderId')
     print("Order FAILED for ID: ", client_order_id)
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
+    await close_all_positions(1)
+    await cancel_all_orders(1)
+    await close_all_positions(2)
+    await cancel_all_orders(2)
+
+    await close_all_positions(1)
+    await cancel_all_orders(1)
+    await close_all_positions(2)
+    await cancel_all_orders(2)
 
     print("ALL POSITIONS CANCELLED AND CLOSED")
 
     print("RESTARTING THE PROCESS")
+    await restart_process()
+    print("Restarted the WebSocket.")
 
     place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
     
@@ -156,6 +156,10 @@ async def on_session_expired(data):
         
     print("SEESION FOR WEB SOCKET 1 HAS EXPIRED.")
     
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
+
     close_all_positions(1)
     cancel_all_orders(1)
     close_all_positions(2)
@@ -170,6 +174,9 @@ async def on_session_expired(data):
 
     print("RESTARTING THE PROCESS")
 
+    await restart_process()
+    print("Restarted the WebSocket.")
+
     place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
     
     print("-------------------------------------")
@@ -180,6 +187,19 @@ async def on_session_expired(data):
 @sio.event
 async def connect_error(data):
     print('Failed to connect to the WebSocket server:', data)
+
+async def restart_process():
+    print("Restarting the WebSocket connection...")
+    await sio.disconnect()  # Disconnect the current session
+    await connect_to_server()  # Reconnect to the server
+
+async def connect_to_server():
+    try:
+        print("Attempting to connect to the WebSocket server...")
+        await sio.connect(server_url, transports=["websocket"])
+        await sio.wait()  # Keeps the connection open to listen for events
+    except Exception as e:
+        print("Connection error:", e)
 
 # Main function to initiate and maintain the WebSocket connection
 async def main():

@@ -2,16 +2,18 @@
 import socketio
 import asyncio
 from generate_listen import create_or_update_listen_key, update_listen_key_expiry
-import redis
-from helpers import delete_order
+from redis.asyncio import Redis
+from async_helpers import place_order, place_bracket_limit_orders, cancel_counter_order
 from main import upper_pct, lower_pct, place_bracket_limit_orders, symbol, qty
 from helpers import place_order, get_current_price, close_all_positions, cancel_all_orders
+import winsound
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
 # WebSocket server URL (without namespace)
 server_url = 'https://fawss.pi42.com/'
 
+lock = asyncio.Lock()
 # Namespace path for authorized streaming
 listen_key = create_or_update_listen_key(2)
 namespace_path = '/auth-stream/' + listen_key
@@ -27,25 +29,19 @@ async def connect():
 # Event listener for when the connection to the server is closed
 @sio.event
 async def disconnect():
+    
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
     print('Disconnected from the WebSocket server')
+
 
 # Event handler for receiving an order filled notification
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
-    client_order_id = data.get('clientOrderId')
-
-    if client_order_id:
-        print(f"Order filled: {client_order_id}")
-        counter_order_id = redis_client.get(client_order_id)
-        if counter_order_id:
-            counter_order_id = counter_order_id.decode('utf-8')
-            print(f"Counter order {counter_order_id} found. Cancelling it.")
-            delete_order(2, counter_order_id)
-
-            redis_client.delete(client_order_id)
-            redis_client.delete(counter_order_id)
-        else:
-            print("No counter order found.")
+    async with lock:
+        client_order_id = data.get('clientOrderId')
+        await cancel_counter_order(2, client_order_id)
 
 
 # Event handler for receiving a partially filled order update
@@ -60,24 +56,29 @@ async def on_order_cancelled(data):
     client_order_id = data.get('clientOrderId')
     print("Order cancelled for ID: ", client_order_id)
 
+execution_lock = asyncio.Lock()
 # Event handler for receiving a failed order notification
 @sio.on('orderFailed', namespace=namespace_path)
 async def on_order_failed(data):
     client_order_id = data.get('clientOrderId')
     print("Order FAILED for ID: ", client_order_id)
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
+    await close_all_positions(1)
+    await cancel_all_orders(1)
+    await close_all_positions(2)
+    await cancel_all_orders(2)
+
+    await close_all_positions(1)
+    await cancel_all_orders(1)
+    await close_all_positions(2)
+    await cancel_all_orders(2)
 
     print("ALL POSITIONS CANCELLED AND CLOSED")
-
+    await restart_process()
     print("RESTARTING THE PROCESS")
 
     place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
@@ -111,6 +112,10 @@ async def on_new_trade(data):
 async def on_session_expired(data):
     
     print("SEESION FOR WEB SOCKET 2 HAS EXPIRED.")
+
+    frequency = 500 
+    duration = 500    
+    winsound.Beep(frequency, duration)
     
     close_all_positions(1)
     cancel_all_orders(1)
@@ -125,7 +130,7 @@ async def on_session_expired(data):
     print("ALL POSITIONS CANCELLED AND CLOSED")
 
     print("RESTARTING THE PROCESS")
-
+    await restart_process()
     place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
     
     print("-------------------------------------")
@@ -136,6 +141,19 @@ async def on_session_expired(data):
 @sio.event
 async def connect_error(data):
     print('Failed to connect to the WebSocket server:', data)
+
+async def restart_process():
+    print("Restarting the WebSocket connection...")
+    await sio.disconnect()  # Disconnect the current session
+    await connect_to_server()  # Reconnect to the server
+
+async def connect_to_server():
+    try:
+        print("Attempting to connect to the WebSocket server...")
+        await sio.connect(server_url, transports=["websocket"])
+        await sio.wait()  # Keeps the connection open to listen for events
+    except Exception as e:
+        print("Connection error:", e)
 
 # Main function to initiate and maintain the WebSocket connection
 async def main():
