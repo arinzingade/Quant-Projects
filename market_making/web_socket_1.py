@@ -35,7 +35,7 @@ async def connect():
 @sio.event
 async def disconnect():
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
     print('Disconnected from the WebSocket server')
 
@@ -83,7 +83,12 @@ async def on_order_filled(data):  # Accept data parameter
             # Execute the bracket limit orders concurrently
             await place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
             CYCLE += 1
+            print("Cycle Number is: ", CYCLE)
             SWITCH = 1
+    
+    frequency = 100
+    duration = 100
+    winsound.Beep(frequency, duration)
 
 
 # Event handler for receiving a partially filled order update
@@ -105,7 +110,7 @@ async def on_order_failed(data):
     print("Order FAILED for ID: ", client_order_id)
 
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
 
     await close_all_positions(1)
@@ -157,7 +162,7 @@ async def on_session_expired(data):
     print("SEESION FOR WEB SOCKET 1 HAS EXPIRED.")
     
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
 
     close_all_positions(1)
