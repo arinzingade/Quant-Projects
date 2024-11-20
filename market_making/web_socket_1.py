@@ -86,8 +86,9 @@ async def on_order_filled(data):  # Accept data parameter
             print("Cycle Number is: ", CYCLE)
             SWITCH = 1
     
-    frequency = 100
-    duration = 100
+    frequency = 750
+    duration = 300
+    winsound.Beep(frequency, duration)
     winsound.Beep(frequency, duration)
 
 

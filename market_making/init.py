@@ -9,7 +9,8 @@ scripts = [
     "web_socket_1.py",
     "web_socket_2.py",
     "regular_update_websockets.py",
-    "main.py"
+    "main.py",
+    "fetch.py"
 ]
 
 # Store the subprocess.Popen objects for tracking

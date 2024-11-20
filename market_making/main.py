@@ -10,7 +10,7 @@ redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
 upper_pct = 0.0015
 lower_pct = 0.0015
-qty = 0.01
+qty = 0.015
 symbol = 'BTCUSDT'
 
 def place_bracket_limit_orders(account_number, symbol, qty, upper_pct, lower_pct, side):
