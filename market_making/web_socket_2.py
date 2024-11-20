@@ -31,7 +31,7 @@ async def connect():
 async def disconnect():
     
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
     print('Disconnected from the WebSocket server')
 
@@ -64,7 +64,7 @@ async def on_order_failed(data):
     print("Order FAILED for ID: ", client_order_id)
 
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
 
     await close_all_positions(1)
@@ -114,7 +114,7 @@ async def on_session_expired(data):
     print("SEESION FOR WEB SOCKET 2 HAS EXPIRED.")
 
     frequency = 500 
-    duration = 500    
+    duration = 750    
     winsound.Beep(frequency, duration)
     
     close_all_positions(1)

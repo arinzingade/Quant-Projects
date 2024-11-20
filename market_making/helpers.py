@@ -155,6 +155,8 @@ def get_open_orders(account_number):
         response.raise_for_status() # Raises an error for bad HTTP responses
         response_data = response.json()
         print('Open orders fetched successfully:', json.dumps(response_data, indent=4))
+
+        return len(response_data)
     except requests.exceptions.HTTPError as err:
         print(f"Failed {response.status_code}: {response.text}")
     except Exception as e:
@@ -298,7 +300,8 @@ def fetch_positions(account_number, ticker, open_position_status):
         response = requests.get(full_url, headers=headers)
         response.raise_for_status() # Raises an error for 4xx/5xx responses
         response_data = response.json()
-        print('Positions fetched successfully:', json.dumps(response_data, indent=4))
+
+        return len(response_data)
     except requests.exceptions.HTTPError as err:
         print(f"Error: {err.response.text if err.response else err}")
     except Exception as e:
