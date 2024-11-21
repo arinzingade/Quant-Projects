@@ -6,10 +6,14 @@ import json
 import requests
 from dotenv import load_dotenv
 import os
+import csv
+from datetime import datetime
+
 
 load_dotenv()
 
 base_url = "https://fapi.pi42.com/"
+
 
 def info_account_1():
     api_key_account_1 = os.getenv('API_KEY_ACCOUNT_1')
@@ -154,7 +158,6 @@ def get_open_orders(account_number):
         response = requests.get(open_orders_url, headers=headers, params={'timestamp': timestamp})
         response.raise_for_status() # Raises an error for bad HTTP responses
         response_data = response.json()
-        print('Open orders fetched successfully:', json.dumps(response_data, indent=4))
 
         return len(response_data)
     except requests.exceptions.HTTPError as err:
@@ -352,3 +355,10 @@ def close_all_positions(account_number):
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
 
+def insert_csv(qty):
+    current_time = datetime.now()
+    csv_file = "market_making.csv"
+    with open(csv_file, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([current_time, 1, qty])
+        print(f"Appended to CSV: {current_time}, {1}")

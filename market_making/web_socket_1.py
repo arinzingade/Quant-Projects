@@ -4,11 +4,13 @@ import asyncio
 from generate_listen import create_or_update_listen_key
 from async_helpers import place_order, place_bracket_limit_orders, cancel_counter_order
 import redis
-from helpers import cancel_all_orders, close_all_positions
+from helpers import cancel_all_orders, close_all_positions, insert_csv
 import time
 from main import upper_pct, lower_pct, symbol, qty
 from redis.asyncio import Redis
 import winsound
+import subprocess
+import pyttsx3
 
 redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
@@ -34,11 +36,14 @@ async def connect():
 # Event listener for when the connection to the server is closed
 @sio.event
 async def disconnect():
-    frequency = 500 
-    duration = 750    
-    winsound.Beep(frequency, duration)
-    print('Disconnected from the WebSocket server')
+    pyttsx3.speak("WebSocket 1 Disconnected.")
 
+    for _ in range(3):  
+        subprocess.run(["python", "close.py"], check=True)
+
+    pyttsx3.speak("All Positions Closed")
+    subprocess.run(["python", "web_socket_1.py"], check=True)
+    pyttsx3.speak("Web Socket 1 started again")
 
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
@@ -84,6 +89,7 @@ async def on_order_filled(data):  # Accept data parameter
             await place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
             CYCLE += 1
             print("Cycle Number is: ", CYCLE)
+            insert_csv(qty)
             SWITCH = 1
     
     frequency = 750
@@ -110,27 +116,17 @@ async def on_order_failed(data):
     client_order_id = data.get('clientOrderId')
     print("Order FAILED for ID: ", client_order_id)
 
-    frequency = 500 
-    duration = 750    
-    winsound.Beep(frequency, duration)
+    pyttsx3.speak("Order Failed")
 
-    await close_all_positions(1)
-    await cancel_all_orders(1)
-    await close_all_positions(2)
-    await cancel_all_orders(2)
-
-    await close_all_positions(1)
-    await cancel_all_orders(1)
-    await close_all_positions(2)
-    await cancel_all_orders(2)
+    for _ in range(3):  
+        subprocess.run(["python", "close.py"], check=True)
 
     print("ALL POSITIONS CANCELLED AND CLOSED")
+    pyttsx3.speak("All Positions Closed.")
 
     print("RESTARTING THE PROCESS")
-    await restart_process()
-    print("Restarted the WebSocket.")
-
-    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+    subprocess.run(["python", "web_socket_1.py"], check=True)
+    pyttsx3.speak("Restarted the WebSocket 1.")
     
 # Event handler for receiving a new order(TP/SL) notification
 @sio.on('newOrder', namespace=namespace_path)
@@ -160,30 +156,17 @@ async def on_new_trade(data):
 @sio.on('sessionExpired', namespace=namespace_path)
 async def on_session_expired(data):
         
-    print("SEESION FOR WEB SOCKET 1 HAS EXPIRED.")
-    
-    frequency = 500 
-    duration = 750    
-    winsound.Beep(frequency, duration)
+    pyttsx3.speak("Session for WebSocket 1 has expired.")
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
+    for _ in range(3):  
+        subprocess.run(["python", "close.py"], check=True)
 
-    close_all_positions(1)
-    cancel_all_orders(1)
-    close_all_positions(2)
-    cancel_all_orders(2)
-
-    print("ALL POSITIONS CANCELLED AND CLOSED")
+    pyttsx3.speak("All Positions Closed.")
 
     print("RESTARTING THE PROCESS")
 
-    await restart_process()
-    print("Restarted the WebSocket.")
-
-    place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
+    subprocess.run(["python", "web_socket_1.py"], check=True)
+    pyttsx3.speak("WebSocket 1 Restarted.")
     
     print("-------------------------------------")
     print("Process Restarted.")
