@@ -4,7 +4,7 @@ import asyncio
 from generate_listen import create_or_update_listen_key
 from async_helpers import place_order, place_bracket_limit_orders, cancel_counter_order
 import redis
-from helpers import cancel_all_orders, close_all_positions, insert_csv
+from helpers import cancel_all_orders, close_all_positions, insert_csv, set_switch, get_switch, toggle_switch
 import time
 from main import upper_pct, lower_pct, symbol, qty
 from redis.asyncio import Redis
@@ -21,10 +21,6 @@ server_url = 'https://fawss.pi42.com/'
 lock = asyncio.Lock()
 listen_key = create_or_update_listen_key(1)
 namespace_path = '/auth-stream/' + listen_key
-
-SWITCH = 1
-CYCLE = 0
-
 # Create a new asynchronous Socket.IO client
 sio = socketio.AsyncClient()
 
@@ -45,10 +41,12 @@ async def disconnect():
     subprocess.run(["python", "web_socket_1.py"], check=True)
     pyttsx3.speak("Web Socket 1 started again")
 
+set_switch(1)
+
 @sio.on('orderFilled', namespace=namespace_path)
 async def on_order_filled(data):  # Accept data parameter
-    global SWITCH
-    global CYCLE
+    
+    SWITCH = get_switch()
 
     async with lock:
         client_order_id = data.get('clientOrderId')
@@ -82,15 +80,14 @@ async def on_order_filled(data):  # Accept data parameter
                 time_taken = end_time - start_time  # Calculate the time taken
                 print(f"Time taken to complete the orders: {time_taken:.2f} seconds")
 
-            SWITCH = 0
+            set_switch(0)
 
         else:
             # Execute the bracket limit orders concurrently
             await place_bracket_limit_orders(1, symbol, qty, upper_pct, lower_pct, 'NEUTRAL')
-            CYCLE += 1
-            print("Cycle Number is: ", CYCLE)
             insert_csv(qty)
-            SWITCH = 1
+            
+            set_switch(1)
     
     frequency = 750
     duration = 300

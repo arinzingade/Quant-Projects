@@ -8,9 +8,9 @@ from helpers import (place_order, get_current_price,
 
 redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
-upper_pct = 0.0012
-lower_pct = 0.0012
-qty = 0.004
+upper_pct = 0.0003
+lower_pct = 0.0003
+qty = 0.008
 symbol = 'BTCUSDT'
 
 def place_bracket_limit_orders(account_number, symbol, qty, upper_pct, lower_pct, side):
