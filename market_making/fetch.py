@@ -1,4 +1,4 @@
-from helpers import get_open_orders, fetch_positions
+from helpers import get_open_orders, fetch_positions, set_switch, get_switch
 from time import sleep
 import subprocess
 import winsound
@@ -20,7 +20,7 @@ def cross_check():
 
     valid_states = [[2, 0, 0, 0], [2, 2, 1, 1]]
     if current_state not in valid_states:
-        sleep(7)
+        sleep(10)
         open_orders_account_1 = get_open_orders(1)
         open_orders_account_2 = get_open_orders(2)
         open_pos_account_1 = fetch_positions(1, 'BTCUSDT', 'OPEN')
@@ -35,6 +35,7 @@ def cross_check():
                 pyttsx3.speak("Closed all the Positions")
                 
             subprocess.run(["python", "main.py"])
+            set_switch(1)
             pyttsx3.speak("Restarted the Process")
     
     else:

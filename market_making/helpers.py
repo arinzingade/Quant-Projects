@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 import os
 import csv
 from datetime import datetime
+from redis import Redis
 
+redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 
 load_dotenv()
 
@@ -362,3 +364,26 @@ def insert_csv(qty):
         writer = csv.writer(file)
         writer.writerow([current_time, 1, qty])
         print(f"Appended to CSV: {current_time}, {1}")
+
+
+def set_switch(value):
+    if value not in [0, 1]:
+        raise ValueError("Value must be 0 or 1.")
+    redis_client.set('SWITCH', value)
+    print(f"SWITCH set to: {value}")
+
+def get_switch():
+    current_value = redis_client.get('SWITCH')
+    if current_value is None:
+        return None 
+    return int(current_value)
+
+def toggle_switch():
+    current_value = get_switch()
+    if current_value is None or current_value == 0:
+        redis_client.set('SWITCH', 1)
+    else:
+        redis_client.set('SWITCH', 0)
+    new_value = get_switch()
+    print(f"SWITCH toggled to: {new_value}")
+    return new_value
