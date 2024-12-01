@@ -3,30 +3,21 @@ import requests
 import json
 
 def get_depth_update(contract_pair):
-
-    # Validate the user input
     if not contract_pair:
         print("Invalid contract pair. Please enter a valid contract pair (e.g., btc, eth).")
         return
-
-    # Construct the URL for the API request using the provided contract pair
+    
     full_url = f"https://api.pi42.com/v1/market/depth/{contract_pair}"
 
     try:
-        # Send the GET request to fetch depth updates
         response = requests.get(full_url)
-        response.raise_for_status()  # Raises an error for 4xx/5xx responses
-
-        # Parse the JSON response data
+        response.raise_for_status()  
         response_data = response.json()
 
-        # Print the depth update in a formatted manner
         print('Depth update fetched successfully:', json.dumps(response_data, indent=4))
     except requests.exceptions.HTTPError as err:
-        # Handle HTTP errors specifically
         print(f"Error: {err.response.text if err.response else err}")
     except Exception as e:
-        # Handle any other unexpected errors
         print(f"An unexpected error occurred: {str(e)}")
 
 def get_kline_data(pair, interval, limit_klines):

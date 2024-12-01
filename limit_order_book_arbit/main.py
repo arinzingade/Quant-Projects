@@ -1,5 +1,5 @@
 
-from endpoints import get_kline_data
+from endpoints import get_kline_data, get_depth_update
 
 if __name__ == "__main__":
-    get_kline_data('BTCUSDT', '1m', 1000)
+    get_depth_update('BTCUSDT')
