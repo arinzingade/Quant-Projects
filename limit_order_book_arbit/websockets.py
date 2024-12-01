@@ -1,6 +1,7 @@
 
 
 import socketio
+import json
 server_url = 'https://fawss.pi42.com/'
 
 sio = socketio.Client()
@@ -31,15 +32,28 @@ def subscribe_to_topics():
 
     @sio.on('depthUpdate')
     def on_depth_update(data):
+        try:
+            best_bid = data.get('b', [])[-1] if data.get('b') else None  # Last bid
+            best_ask = data.get('a', [])[0] if data.get('a') else None  # First ask
 
+            if not best_bid or not best_ask:
+                raise ValueError("Bids or asks data is missing or incomplete.")
 
-        last_bid = data['b'][-1]  
-        first_ask = data['a'][0]  
-
-        # Print the extracted values
-        print(f"Last Bid Price: {last_bid}")
-        print(f"First Ask Price: {first_ask}")
-        print("-------------------------------------")
+            result = {
+                "best_bid": {
+                    "price": float(best_bid[0]),
+                    "quantity": float(best_bid[1])
+                },
+                "best_ask": {
+                    "price": float(best_ask[0]),
+                    "quantity": float(best_ask[1])
+                }
+            }
+            print(result)
+            return result
+        except Exception as e:
+            print(f"Error processing depth update: {e}")
+            return {"error": str(e)}
 
     @sio.on('kline')
     def on_kline(data):
