@@ -4,46 +4,47 @@ import pandas as pd
 from public_endpoints import get_kline_data
 from supertrend import get_supertrend
 import numpy as np
+import warnings
+
+from coinswitch import place_order
+
+warnings.filterwarnings('ignore')
+STATUS = "neutral"
 
 def append_to_df(df, high, low, close):
-    # Get the current timestamp for the new row
-    timestamp = pd.to_datetime('now')  # You can change this to a specific timestamp if needed
+    timestamp = pd.to_datetime('now')    
+    data = {'Timestamp': timestamp, 'High': float(high), 'Low': float(low), 'Close': float(close)}
     
-    # Prepare the new data to append
-    data = {'High': float(high), 'Low': float(low), 'Close': float(close)}
+    new_row = pd.DataFrame([data])
     
-    # Create a new DataFrame with the new row and correct timestamp
-    new_row = pd.DataFrame([data], index=[timestamp])
+    df = pd.concat([df, new_row], ignore_index=True)
     
-    # Append the new row to the existing DataFrame
-    df = pd.concat([df, new_row])
-    
-    # Ensure the DataFrame is sorted by the Timestamp index (ascending order)
-    df.reset_index(drop=True, inplace=True)
+    df.set_index('Timestamp')
+    df.index = pd.to_datetime(df.index)
     
     return df
 
 def make_init_data(contract_pair):
     # Fetching the kline data
-    info = get_kline_data(contract_pair, limit=25)
+    info = get_kline_data(contract_pair, limit=20)
     
     data = []
-    
-    # Looping through the fetched data
+
     for i in info:
         high = float(i['high'])
         low = float(i['low'])
         close = float(i['close'])
-        data.append({'High': high, 'Low': low, 'Close': close})
+        
+        timestamp = pd.to_datetime(int(i['startTime']), unit='ms')
+        
+        data.append({'Timestamp': timestamp, 'High': high, 'Low': low, 'Close': close})
     
     # Create the DataFrame
     df = pd.DataFrame(data)
-    
-    # Reset the index to 0, 1, 2, 3, ... (default integer index)
-    df.reset_index(drop=True, inplace=True)
+    df.set_index('Timestamp')
+    df.index = pd.to_datetime(df.index)
     
     return df
-
 
 def call_every_one_minute(contract_pair):
     info = get_kline_data(contract_pair)
@@ -51,7 +52,7 @@ def call_every_one_minute(contract_pair):
     print(f"Data fetched at: {datetime.now()}")
 
     list_return = [float(info[0]['high']), float(info[0]['low']), float(info[0]['close'])]
-    print(list_return)
+
     return list_return
 
 def run_scheduled_task(contract_pair):
@@ -64,17 +65,76 @@ def run_scheduled_task(contract_pair):
 
 def manage_dataframe_size(df, max_size = 30, rows_to_delete = 15):
     if len(df) > max_size:
-        df = df.iloc[rows_to_delete:].reset_index(drop=True)  # Delete top rows and reset index
+        df = df.iloc[rows_to_delete:]
     return df
 
+def is_buy_signal(df):
+    global STATUS
+
+    st_upt = list(df['st_upt'])
+    length = len(st_upt)
+
+    curr = st_upt[length-1]
+    prev = st_upt[length-2]
+
+    if pd.isna(prev) and curr > 0:
+        print("BUY SIGNAL")
+        STATUS = "long"
+        return True
+
+def is_sell_signal(df):
+    global STATUS
+
+    st_dt = list(df['st_dt'])
+    length = len(st_dt)
+
+    curr = st_dt[length-1]
+    prev = st_dt[length-2]
+
+    if pd.isna(prev) and curr > 0:
+        print("SELL SIGNAL")
+        STATUS = "short"
+        return True
+
 if __name__ == "__main__":
+
     ticker = 'BTCUSDT'
     df = make_init_data(ticker)
     print("Initial DataFrame:")
-    
     print(df)
 
-    df['st'], df['s_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
-    print(df)
+    df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
+
+    while True:
+        if datetime.now().second == 5:
+
+            high, low, close = call_every_one_minute(ticker)
+            df = append_to_df(df, high, low, close)
             
+            df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
+            
+            print(df)
 
+            print(STATUS)
+
+            if STATUS == "neutral":
+                if is_buy_signal(df):
+                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
+                    STATUS = "long"
+                elif is_sell_signal(df):
+                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
+                    STATUS = "short"
+
+            elif STATUS == "short":
+                if is_buy_signal(df):
+                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
+                    STATUS = "long"
+            
+            elif STATUS == "long":
+                if is_sell_signal(df):
+                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
+                    STATUS = "short"
+            
+            time.sleep(55)
