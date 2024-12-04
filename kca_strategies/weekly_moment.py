@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-start_date = '2024-11-01'
+start_date = '2014-11-01'
 end_date = datetime.now().strftime('%Y-%m-%d')
 capital = 100000
 country_code = ".NS"
