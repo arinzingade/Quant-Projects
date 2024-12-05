@@ -5,11 +5,17 @@ from public_endpoints import get_kline_data
 from supertrend import get_supertrend
 import numpy as np
 import warnings
-
+import winsound
+import os
 from coinswitch import place_order
 
 warnings.filterwarnings('ignore')
 STATUS = "neutral"
+
+qty = float(os.getenv('QTY'))
+
+frequency = 750
+duration = 300
 
 def append_to_df(df, high, low, close):
     timestamp = pd.to_datetime('now')    
@@ -119,22 +125,33 @@ if __name__ == "__main__":
 
             if STATUS == "neutral":
                 if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
                     STATUS = "long"
+
+                    winsound.Beep(frequency, duration)
+
                 elif is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
                     STATUS = "short"
+
+                    winsound.Beep(frequency, duration)
 
             elif STATUS == "short":
                 if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
-                    place_order("btcusdt", "BUY", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
+                    time.sleep(2)
+                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
                     STATUS = "long"
+
+                    winsound.Beep(frequency, duration)
             
             elif STATUS == "long":
                 if is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
-                    place_order("btcusdt", "SELL", "MARKET", 0.002, 95000)
+                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
+                    time.sleep(2)
+                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
                     STATUS = "short"
+
+                    winsound.Beep(frequency, duration)
             
             time.sleep(55)
