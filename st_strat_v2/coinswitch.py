@@ -139,12 +139,3 @@ def get_open_orders(symbol):
     }
     response = requests.request("GET", url, headers=headers, json=payload)
     return response
-
-
-open_orders = get_open_orders('btcusdt')
-print(open_orders)
-
-
-
-
-

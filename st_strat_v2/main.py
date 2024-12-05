@@ -7,6 +7,7 @@ import numpy as np
 import warnings
 import os
 from coinswitch import place_order, get_open_orders, cancel_all_orders
+from coin_class import ApiTradingClient
 
 warnings.filterwarnings('ignore')
 
@@ -14,7 +15,11 @@ STATUS = "neutral"
 qty = float(os.getenv('QTY'))
 fees_pct = float(os.getenv('FEES_PCT'))
 fees_mult = int(os.getenv('FEES_MULT'))
-symbol = os.getenv('SYMBOL')
+symbol = str(os.getenv('SYMBOL'))
+secret_key = os.getenv('SECRET')
+api_key = os.getenv('API_KEY')
+
+api_trading_client = ApiTradingClient(secret_key, api_key)
 
 init_price = 0
 
@@ -113,11 +118,20 @@ def thresh_points(current_price, qty, fees_pct, mult):
 
     return points
 
+def get_open_orders_count(symbol):
+    payload = {
+        "symbol": symbol,
+        "exchange": "EXCHANGE_2",  
+    }
+
+    response = (api_trading_client.futures_open_orders(payload=payload))
+    count = len(response['data']['orders'])
+
+    return count
 
 if __name__ == "__main__":
 
-    ticker = symbol
-    df = make_init_data(ticker)
+    df = make_init_data(symbol.upper())
     print("Initial DataFrame:")
     print(df)
 
@@ -126,7 +140,7 @@ if __name__ == "__main__":
     while True:
         if datetime.now().second == 5:
 
-            high, low, close = call_every_one_minute(ticker)
+            high, low, close = call_every_one_minute(symbol.upper())
             df = append_to_df(df, high, low, close)
             
             df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
@@ -142,7 +156,11 @@ if __name__ == "__main__":
 
             print(STATUS)
 
-            #open_orders_count = len(get_open_orders(symbol))
+            open_orders_count = get_open_orders_count(symbol)
+
+            if open_orders_count == 0:
+                STATUS = "neutral"
+                print("STATUS updated to Neutral")
 
             if STATUS == "neutral":
                 if is_buy_signal(df):
@@ -174,5 +192,5 @@ if __name__ == "__main__":
                     init_price = current_price
                     place_order(symbol, 'BUY', 'LIMIT', qty, round(init_price - thresh))
                     STATUS = "short"
-    
-            time.sleep(55)
+            
+            time.sleep(5)
