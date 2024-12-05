@@ -6,15 +6,17 @@ from supertrend import get_supertrend
 import numpy as np
 import warnings
 import os
-from coinswitch import place_order
+from coinswitch import place_order, get_open_orders, cancel_all_orders
 
 warnings.filterwarnings('ignore')
+
 STATUS = "neutral"
-
 qty = float(os.getenv('QTY'))
+fees_pct = float(os.getenv('FEES_PCT'))
+fees_mult = int(os.getenv('FEES_MULT'))
+symbol = os.getenv('SYMBOL')
 
-frequency = 750
-duration = 300
+init_price = 0
 
 def append_to_df(df, high, low, close):
     timestamp = pd.to_datetime('now')    
@@ -101,9 +103,20 @@ def is_sell_signal(df):
         STATUS = "short"
         return True
 
+
+def thresh_points(current_price, qty, fees_pct, mult):
+    fees_taker = fees_pct * current_price * 2 * qty
+    profit_target = fees_taker * mult
+    profit_target_pct = profit_target / (current_price * qty)
+
+    points = current_price * profit_target_pct
+
+    return points
+
+
 if __name__ == "__main__":
 
-    ticker = 'BTCUSDT'
+    ticker = symbol
     df = make_init_data(ticker)
     print("Initial DataFrame:")
     print(df)
@@ -118,33 +131,48 @@ if __name__ == "__main__":
             
             df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
             
+            current_price = list(df['Close'])[len(df['Close']) - 1]
+            thresh = thresh_points(current_price, qty, fees_pct, fees_mult)
+
             print(df)
+
+            print("Init Price: ", init_price)
+            print("Current Price is: ", current_price)
+            print("Thresh Points are: ", thresh)
 
             print(STATUS)
 
+            #open_orders_count = len(get_open_orders(symbol))
+
             if STATUS == "neutral":
                 if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
+                    place_order(symbol, "BUY", "MARKET", qty)
+                    init_price = current_price
+                    place_order(symbol, 'SELL', 'LIMIT', qty, round(init_price + thresh))
                     STATUS = "long"
 
-
                 elif is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
+                    place_order(symbol, "SELL", "MARKET", qty)
+                    init_price = current_price
+                    place_order(symbol, 'BUY', 'LIMIT', qty, round(init_price - thresh))
                     STATUS = "short"
 
             elif STATUS == "short":
                 if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
+                    place_order(symbol, "BUY", "MARKET", qty)
                     time.sleep(2)
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
+                    place_order(symbol, "BUY", "MARKET", qty)
+                    init_price = current_price
+                    place_order(symbol, 'SELL', 'LIMIT', qty, round(init_price + thresh))
                     STATUS = "long"
 
-            
             elif STATUS == "long":
                 if is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
+                    place_order(symbol, "SELL", "MARKET", qty)
                     time.sleep(2)
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
+                    place_order(symbol, "SELL", "MARKET", qty)
+                    init_price = current_price
+                    place_order(symbol, 'BUY', 'LIMIT', qty, round(init_price - thresh))
                     STATUS = "short"
-            
+    
             time.sleep(55)
