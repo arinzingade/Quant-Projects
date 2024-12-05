@@ -2,3 +2,5 @@
 numpy
 pandas
 requests
+cryptography
+python-dotenv

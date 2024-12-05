@@ -109,33 +109,5 @@ def cancel_all_orders():
 
     response = requests.request("POST", url, headers=headers, json=payload)
 
-    return response
-
-
-def get_open_orders(symbol):
-
-    params = {
-        "exchange": "EXCHANGE_2",
-        "symbol" : symbol
-    }
-
-    payload = {}
-    endpoint = "/trade/api/v2/futures/orders/open"
-    endpoint += ('&', '?')[urlparse(endpoint).query == ''] + urlencode(params)
-    url = "https://coinswitch.co" + endpoint
-
-    sign = get_signature( 
-            "GET", 
-            "/trade/api/v2/futures/orders/open", 
-            {}, 
-            str(int(time.time() * 1000))
-        )
-
-    print(sign)
-    headers = {
-    'Content-Type': 'application/json',
-    'X-AUTH-SIGNATURE': sign,
-    'X-AUTH-APIKEY': api_key
-    }
-    response = requests.request("GET", url, headers=headers, json=payload)
+    print(response.text)
     return response

@@ -6,7 +6,7 @@ from supertrend import get_supertrend
 import numpy as np
 import warnings
 import os
-from coinswitch import place_order, get_open_orders, cancel_all_orders
+from coinswitch import place_order, cancel_all_orders
 from coin_class import ApiTradingClient
 
 warnings.filterwarnings('ignore')
@@ -165,32 +165,37 @@ if __name__ == "__main__":
             if STATUS == "neutral":
                 if is_buy_signal(df):
                     place_order(symbol, "BUY", "MARKET", qty)
-                    init_price = current_price
-                    place_order(symbol, 'SELL', 'LIMIT', qty, round(init_price + thresh))
+                    time.sleep(1)
+                    place_order(symbol, 'SELL', 'LIMIT', qty, round(current_price + thresh))
                     STATUS = "long"
 
                 elif is_sell_signal(df):
                     place_order(symbol, "SELL", "MARKET", qty)
-                    init_price = current_price
-                    place_order(symbol, 'BUY', 'LIMIT', qty, round(init_price - thresh))
+                    time.sleep(1)
+                    place_order(symbol, 'BUY', 'LIMIT', qty, round(current_price - thresh))
                     STATUS = "short"
 
             elif STATUS == "short":
                 if is_buy_signal(df):
                     place_order(symbol, "BUY", "MARKET", qty)
-                    time.sleep(2)
+
+                    time.sleep(1)
                     place_order(symbol, "BUY", "MARKET", qty)
-                    init_price = current_price
-                    place_order(symbol, 'SELL', 'LIMIT', qty, round(init_price + thresh))
+                    cancel_all_orders()
+                    time.sleep(1)
+                    place_order(symbol, 'SELL', 'LIMIT', qty, round(current_price + thresh))
                     STATUS = "long"
 
             elif STATUS == "long":
                 if is_sell_signal(df):
                     place_order(symbol, "SELL", "MARKET", qty)
-                    time.sleep(2)
+
+                    time.sleep(1)
                     place_order(symbol, "SELL", "MARKET", qty)
-                    init_price = current_price
-                    place_order(symbol, 'BUY', 'LIMIT', qty, round(init_price - thresh))
+                    cancel_all_orders()
+
+                    time.sleep(1)
+                    place_order(symbol, 'BUY', 'LIMIT', qty, round(current_price - thresh))
                     STATUS = "short"
             
             time.sleep(5)
