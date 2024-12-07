@@ -1,0 +1,8 @@
+
+services:
+
+  trend_automation_service:
+    build: .
+    env_file:
+      - .env
+    
