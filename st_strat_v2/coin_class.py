@@ -11,6 +11,7 @@ load_dotenv()
 
 api_key = os.getenv('API_KEY')
 
+
 class ApiTradingClient:
     secret_key = None,
     api_key = None

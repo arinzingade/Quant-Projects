@@ -54,7 +54,7 @@ if __name__ == "__main__":
             print(df)
 
             print(STATUS)
-            
+
             if STATUS == "neutral":
                 if is_buy_signal(df):
                     client.place_order(symbol, 'MARKET', qty, 'BUY')
@@ -79,4 +79,4 @@ if __name__ == "__main__":
                         client.place_order(symbol, 'MARKET', qty, 'SELL')
                         STATUS = "short"
                 
-                time.sleep(55)
+            time.sleep(55)

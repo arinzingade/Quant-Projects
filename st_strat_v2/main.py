@@ -135,6 +135,8 @@ if __name__ == "__main__":
     print("Initial DataFrame:")
     print(df)
 
+    print("Qty: ", qty)
+
     df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
 
     while True:
@@ -166,13 +168,13 @@ if __name__ == "__main__":
                 if is_buy_signal(df):
                     place_order(symbol, "BUY", "MARKET", qty)
                     time.sleep(1)
-                    place_order(symbol, 'SELL', 'LIMIT', qty, round(current_price + thresh))
+                    place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                     STATUS = "long"
 
                 elif is_sell_signal(df):
                     place_order(symbol, "SELL", "MARKET", qty)
                     time.sleep(1)
-                    place_order(symbol, 'BUY', 'LIMIT', qty, round(current_price - thresh))
+                    place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                     STATUS = "short"
 
             elif STATUS == "short":
@@ -183,7 +185,7 @@ if __name__ == "__main__":
                     place_order(symbol, "BUY", "MARKET", qty)
                     cancel_all_orders()
                     time.sleep(1)
-                    place_order(symbol, 'SELL', 'LIMIT', qty, round(current_price + thresh))
+                    place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                     STATUS = "long"
 
             elif STATUS == "long":
@@ -195,7 +197,7 @@ if __name__ == "__main__":
                     cancel_all_orders()
 
                     time.sleep(1)
-                    place_order(symbol, 'BUY', 'LIMIT', qty, round(current_price - thresh))
+                    place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                     STATUS = "short"
             
             time.sleep(5)
