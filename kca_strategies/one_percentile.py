@@ -8,9 +8,9 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-start = "2024-11-25"
-end = "2024-11-26"
-qty = 0.01
+start = "2024-12-5"
+end = "2024-12-6"
+qty = 0.003
 fees = 0.0002
 
 try:

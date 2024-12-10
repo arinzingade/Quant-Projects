@@ -1,4 +1,5 @@
 
+
 import datetime
 import time
 import concurrent.futures
@@ -9,8 +10,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-api_key = os.getenv('API_KEY')
-
+api_key = os.getenv('API_KEY_1')
 
 class ApiTradingClient:
     secret_key = None,
@@ -164,8 +164,6 @@ class ApiTradingClient:
 
     # Orders
     def futures_create_order(self, payload: dict = {}):
-        # payload = self.remove_trailing_zeros(payload)
-        print(payload)
         return self.make_request("POST", "/trade/api/v2/futures/order", payload=payload)
 
     def futures_cancel_order(self, payload: dict = {}):

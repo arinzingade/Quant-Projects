@@ -1,20 +1,9 @@
-import time
-from datetime import datetime
+
 import pandas as pd
-from public_endpoints import get_kline_data
-from supertrend import get_supertrend
 import numpy as np
-import warnings
-import os
-from coinswitch import place_order
-
-warnings.filterwarnings('ignore')
-STATUS = "neutral"
-
-qty = float(os.getenv('QTY'))
-
-frequency = 750
-duration = 300
+from public_endpoints import get_kline_data
+from datetime import datetime
+import time
 
 def append_to_df(df, high, low, close):
     timestamp = pd.to_datetime('now')    
@@ -100,51 +89,3 @@ def is_sell_signal(df):
         print("SELL SIGNAL")
         STATUS = "short"
         return True
-
-if __name__ == "__main__":
-
-    ticker = 'XRPUSDT'
-    df = make_init_data(ticker)
-    print("Initial DataFrame:")
-    print(df)
-
-    df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
-
-    while True:
-        if datetime.now().second == 5:
-
-            high, low, close = call_every_one_minute(ticker)
-            df = append_to_df(df, high, low, close)
-            
-            df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
-            
-            print(df)
-
-            print(STATUS)
-
-            if STATUS == "neutral":
-                if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
-                    STATUS = "long"
-
-
-                elif is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
-                    STATUS = "short"
-
-            elif STATUS == "short":
-                if is_buy_signal(df):
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
-                    time.sleep(2)
-                    place_order("btcusdt", "BUY", "MARKET", qty, 95000)
-                    STATUS = "long"
-
-            
-            elif STATUS == "long":
-                if is_sell_signal(df):
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
-                    time.sleep(2)
-                    place_order("btcusdt", "SELL", "MARKET", qty, 95000)
-                    STATUS = "short"
-            
-            time.sleep(55)

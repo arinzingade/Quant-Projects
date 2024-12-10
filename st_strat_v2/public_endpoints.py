@@ -1,6 +1,7 @@
 
 import requests
 import json
+import time
 
 def get_24hr_ticker_update(contract_pair):
 
@@ -44,13 +45,19 @@ def get_kline_data(pair, interval = "1m", limit = 1):
             'Content-Type': 'application/json'
         }
 
-        # Construct the full URL for the Kline endpoint
+        
         kline_url = "https://api.pi42.com/v1/market/klines"
 
-        # Send the POST request to get Kline data
-        response = requests.post(kline_url, json=params, headers=headers)
-        response.raise_for_status() # Raises an error for 4xx/5xx responses
-        response_data = response.json()
+        for attempt in range(3):
+            try:
+                response = requests.post(kline_url, json=params, headers=headers)
+                response.raise_for_status() # Raises an error for 4xx/5xx responses
+                response_data = response.json()
+                break  
+
+            except requests.exceptions.RequestException:
+                print(f"Retrying... ({attempt + 1})")
+                time.sleep(10)  
         
         return response_data
 
@@ -60,5 +67,3 @@ def get_kline_data(pair, interval = "1m", limit = 1):
         print(f"Error: {err.response.text if err.response else err}")
     except Exception as e:
         print(f"An unexpected error occurred: {str(e)}")
-
-print(get_kline_data('BTCUSDT'))
