@@ -70,12 +70,14 @@ if __name__ == "__main__":
 
             open_orders_count = get_open_orders_count(symbol)
 
-            if open_orders_count == 0:
+            if open_orders_count == 0 or open_orders_count == 1:
+                cancel_all_orders()
                 status.set_status("neutral")
                 print("STATUS updated to Neutral")
 
             if status.get_status() == "neutral":
                 if is_buy_signal(df):
+                    cancel_all_orders()
                     place_order(symbol, "BUY", "MARKET", qty)
                     time.sleep(1)
                     place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
@@ -83,6 +85,7 @@ if __name__ == "__main__":
                     status.set_status("long")
 
                 elif is_sell_signal(df):
+                    cancel_all_orders()
                     place_order(symbol, "SELL", "MARKET", qty)
                     time.sleep(1)
                     place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)

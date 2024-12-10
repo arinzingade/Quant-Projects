@@ -49,6 +49,11 @@ def get_signature(method, endpoint, params, epoch_time):
 
 def place_order(symbol, side, order_type, qty, price = 95000):
 
+    if order_type == 'STOP_MARKET':
+        reduce_only = True
+    else:
+        reduce_only = False
+
     url = "https://coinswitch.co/trade/api/v2/futures/order"
 
     payload = {
@@ -59,7 +64,7 @@ def place_order(symbol, side, order_type, qty, price = 95000):
         "order_type": order_type,        
         "quantity": qty,               
         "trigger_price": price,        
-        "reduce_only": True         
+        "reduce_only": reduce_only         
     }
 
     headers = {

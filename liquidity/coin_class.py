@@ -164,8 +164,6 @@ class ApiTradingClient:
 
     # Orders
     def futures_create_order(self, payload: dict = {}):
-        # payload = self.remove_trailing_zeros(payload)
-        print(payload)
         return self.make_request("POST", "/trade/api/v2/futures/order", payload=payload)
 
     def futures_cancel_order(self, payload: dict = {}):
