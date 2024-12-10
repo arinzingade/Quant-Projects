@@ -65,6 +65,7 @@ def cancel_all_orders(account_number):
     }
 
     response = requests.request("POST", url, headers=headers, json=payload)
+    print('Cancelled All Orders for account {account_number}')
     return response
 
 
@@ -120,6 +121,8 @@ def place_order(account_number, symbol, price, order_type, qty, order_side):
     }
 
     info = client.futures_create_order(payload)
+
+    print(f'Placed a {order_type} for account {account_number} on the {order_side} side.')
 
     return info
 
@@ -194,4 +197,6 @@ def place_limit_bracket_orders(account_number, symbol, qty, upper_pct, lower_pct
 
         redis_client.set(client_order_id_1, client_order_id_2)
         redis_client.set(client_order_id_2, client_order_id_1)
+
+        print(f'Placed Bracket Limit Orders for Account {account_number} on the side {side}')
 
