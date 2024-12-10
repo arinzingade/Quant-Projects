@@ -103,7 +103,7 @@ def is_sell_signal(df):
 
 if __name__ == "__main__":
 
-    ticker = 'BTCUSDT'
+    ticker = 'XRPUSDT'
     df = make_init_data(ticker)
     print("Initial DataFrame:")
     print(df)

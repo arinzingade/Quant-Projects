@@ -57,7 +57,7 @@ def get_kline_data(pair, interval = "1m", limit = 1):
 
             except requests.exceptions.RequestException:
                 print(f"Retrying... ({attempt + 1})")
-                time.sleep(2)  
+                time.sleep(10)  
         
         return response_data
 
