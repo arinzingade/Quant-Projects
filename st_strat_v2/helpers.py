@@ -52,7 +52,7 @@ def make_init_data(contract_pair):
     
     try:
         logger.info(f"Fetching kline data for contract pair: {contract_pair}")
-        info = get_kline_data(contract_pair, limit=20)
+        info = get_kline_data(contract_pair, limit=100)
         
         data = []
 

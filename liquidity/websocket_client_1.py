@@ -1,48 +1,24 @@
 import socketio
 from dotenv import load_dotenv
 import os
+from coin_class import ApiTradingClient
+from helpers import get_open_orders_count
 
 load_dotenv()
 
 api_key = os.getenv('API_KEY_1')
+secret_key = os.getenv('API_SECRET_1')
 
-sio = socketio.Client()
-
-@sio.event(namespace='/orderupdates')
-def connect():
-    print("Connected to the WebSocket server.")
-    subscribe_data = {
-        'event': 'subscribe',
-        'apikey': api_key
-    }
-
-    sio.emit('FETCH_ORDER_UPDATES', subscribe_data, namespace='/orderupdates')
-
-@sio.on('ORDER_UPDATE', namespace='/orderupdates')
-def order_update(data):
-    print("Received an order update:", data)
-
-    if data.get('status') == 'filled':
-        print(f"Order {data.get('order_id')} is filled.")
-
-@sio.event(namespace='/orderupdates')
-def disconnect():
-    print("Disconnected from the WebSocket server.")
+client = ApiTradingClient(api_key=api_key, secret_key=secret_key)
 
 
-@sio.event(namespace='/orderupdates')
-def connect_error(data):
-    print("Connection failed:", data)
+if not api_key:
+    raise ValueError("API key is missing. Check your environment configuration.")
 
-try:
-    sio.connect(
-        url='wss://ws.coinswitch.co',
-        namespaces=['/orderupdates'],
-        transports=['websocket'],
-        socketio_path='/pro/realtime-rates-socket/spot/order-updates',
-        wait=True,
-        wait_timeout=3600
-    )
-    sio.wait() 
-except Exception as e:
-    print("An error occurred:", e)
+
+while True:
+
+    if get_open_orders_count(1, 'BTCUSDT') == 1:
+        client.futures_cancel_all()
+
+        

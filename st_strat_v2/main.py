@@ -20,7 +20,7 @@ warnings.filterwarnings('ignore')
 
 status = StateManager()
 
-qty = int(os.getenv('QTY'))
+qty = float(os.getenv('QTY'))
 fees_pct = float(os.getenv('FEES_PCT'))
 fees_mult = int(os.getenv('FEES_MULT'))
 symbol = str(os.getenv('SYMBOL'))
@@ -79,12 +79,14 @@ if __name__ == "__main__":
                     place_order(symbol, "BUY", "MARKET", qty)
                     time.sleep(1)
                     place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
+                    place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
                     status.set_status("long")
 
                 elif is_sell_signal(df):
                     place_order(symbol, "SELL", "MARKET", qty)
                     time.sleep(1)
                     place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
+                    place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
 
             elif status.get_status() == "short":
@@ -96,6 +98,7 @@ if __name__ == "__main__":
                     cancel_all_orders()
                     time.sleep(1)
                     place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
+                    place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
                     status.set_status("long")
 
             elif status.get_status() == "long":
@@ -108,6 +111,7 @@ if __name__ == "__main__":
 
                     time.sleep(1)
                     place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
+                    place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
             
-            time.sleep(5)
+            time.sleep(55)

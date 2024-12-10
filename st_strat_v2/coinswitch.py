@@ -59,7 +59,7 @@ def place_order(symbol, side, order_type, qty, price = 95000):
         "order_type": order_type,        
         "quantity": qty,               
         "trigger_price": price,        
-        "reduce_only": False         
+        "reduce_only": True         
     }
 
     headers = {
