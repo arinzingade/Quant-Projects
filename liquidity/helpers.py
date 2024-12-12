@@ -9,9 +9,16 @@ import urllib
 from urllib.parse import urlencode, urlparse
 import json
 from cryptography.hazmat.primitives.asymmetric import ed25519
+import csv
+from datetime import datetime
+import time
 
 redis_client = Redis(host='localhost', port=6379, decode_responses=False)
 load_dotenv()
+
+symbol = os.getenv('SYMBOL')
+
+
 
 api_key_1 = os.getenv('API_KEY_1')
 secret_key_1 = os.getenv('API_SECRET_1')
@@ -65,7 +72,7 @@ def cancel_all_orders(account_number):
     }
 
     response = requests.request("POST", url, headers=headers, json=payload)
-    print('Cancelled All Orders for account {account_number}')
+    print(f'Cancelled All Orders for account {account_number}')
     return response
 
 
@@ -181,22 +188,38 @@ def place_limit_bracket_orders(account_number, symbol, qty, upper_pct, lower_pct
         lower_limit_price = custom_round_to_10_not_5(int(current_price * (1 - lower_pct)))
 
         if side == 'NEUTRAL':
-            order_1_info = place_order(account_number, symbol, upper_limit_price, 'LIMIT', qty, 'SELL')
-            order_2_info = place_order(account_number, symbol, lower_limit_price, 'LIMIT', qty, 'BUY')
+            place_order(account_number, symbol, upper_limit_price, 'LIMIT', qty, 'SELL')
+            time.sleep(1)
+            place_order(account_number, symbol, lower_limit_price, 'LIMIT', qty, 'BUY')
 
         elif side == 'BUY':
-            order_1_info = place_order(account_number, symbol, upper_limit_price, 'LIMIT', qty, 'SELL')
-            order_2_info = place_order(account_number, symbol, lower_limit_price, 'STOP_MARKET', qty, 'SELL')
+            place_order(account_number, symbol, upper_limit_price, 'LIMIT', qty, 'SELL')
+            time.sleep(1)
+            place_order(account_number, symbol, lower_limit_price, 'STOP_MARKET', qty, 'SELL')
         
         elif side == 'SELL':
-            order_1_info = place_order(account_number, symbol, upper_limit_price, 'STOP_MARKET', qty, 'BUY')
-            order_2_info = place_order(account_number, symbol, lower_limit_price, 'LIMIT', qty, 'BUY')
-
-        client_order_id_1 = order_1_info['data']['order_id']
-        client_order_id_2 = order_2_info['data']['order_id']
-
-        redis_client.set(client_order_id_1, client_order_id_2)
-        redis_client.set(client_order_id_2, client_order_id_1)
+            place_order(account_number, symbol, upper_limit_price, 'STOP_MARKET', qty, 'BUY')
+            time.sleep(1)
+            place_order(account_number, symbol, lower_limit_price, 'LIMIT', qty, 'BUY')
 
         print(f'Placed Bracket Limit Orders for Account {account_number} on the side {side}')
 
+
+def volume_generated(qty):
+    price = 90000
+    return qty * price * 2
+
+def write_to_csv(timestamp, symbol, qty, volume):
+    filename = "volume_data.csv"
+    header = ["timestamp", "symbol", "qty", "volume_generated"]
+
+    try:
+        with open(filename, mode='x', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(header)  # Write header
+    except FileExistsError:
+        pass
+    
+    with open(filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([timestamp, symbol, qty, volume])
