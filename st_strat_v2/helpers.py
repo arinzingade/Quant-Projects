@@ -185,3 +185,21 @@ def get_open_orders_count(symbol):
     except Exception as e:
         logger.error(f"Error in `get_open_orders_count`: {e}")
         raise
+
+
+def get_closed_orders(symbol):
+    try:
+        logger.info(f"Fetching closed orders count for symbol: {symbol}")
+        payload = {
+            'symbol': symbol,
+            'exchange': "EXCHANGE_2"
+        }
+
+        response = api_trading_client.futures_closed_orders(payload=payload)
+        count = len(response['data']['orders'])
+        logger.info(f"Closed orders count for {symbol} : {count}")
+
+        return count
+    
+    except Exception as e:
+        logger.info(f"Error in 'get_closed_orders_count' : {e} ")

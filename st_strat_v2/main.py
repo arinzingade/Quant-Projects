@@ -32,7 +32,7 @@ api_trading_client = ApiTradingClient(secret_key, api_key)
 init_price = 0
 
 if __name__ == "__main__":
-
+    place_order(symbol, "SELL", "MARKET", qty)
     df = make_init_data(symbol.upper())
     print("Initial DataFrame:")
     print(df)
