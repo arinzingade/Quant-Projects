@@ -26,26 +26,26 @@ fees_mult = int(os.getenv('FEES_MULT'))
 symbol = str(os.getenv('SYMBOL'))
 secret_key = os.getenv('SECRET')
 api_key = os.getenv('API_KEY')
+time_interval = int(os.getenv('TIME_FRAME_MIN'))
 
 api_trading_client = ApiTradingClient(secret_key, api_key)
 
 init_price = 0
 
 if __name__ == "__main__":
-    df = make_init_data(symbol.upper())
+    df = make_init_data(symbol.upper(), time = str(time_interval) + "m")
     print("Initial DataFrame:")
     print(df)
-
     print("Qty: ", qty)
 
     df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
 
     while True:
-        if datetime.now().second == 5:
+        if datetime.now().second == 5 and datetime.now().minute % time_interval == 0:
             
             for attempt in range(3):
                 try:
-                    high, low, close = call_every_one_minute(symbol.upper())
+                    high, low, close = call_every_one_minute(symbol.upper(), time = str(time_interval) + "m")
                     break
                 except:
                     print(f"Retrying... ({attempt + 1})")
@@ -116,4 +116,4 @@ if __name__ == "__main__":
                     place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
             
-            time.sleep(55)
+            time.sleep(time_interval * 60)

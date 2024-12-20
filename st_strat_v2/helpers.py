@@ -48,11 +48,11 @@ def append_to_df(df, high, low, close):
         raise
 
 
-def make_init_data(contract_pair):
+def make_init_data(contract_pair, time = "1m"):
     
     try:
         logger.info(f"Fetching kline data for contract pair: {contract_pair}")
-        info = get_kline_data(contract_pair, limit=100)
+        info = get_kline_data(contract_pair, interval=time, limit=100)
         
         data = []
 
@@ -78,10 +78,10 @@ def make_init_data(contract_pair):
         raise
 
 
-def call_every_one_minute(contract_pair):
+def call_every_one_minute(contract_pair, time = "1m"):
     try:
         logger.info(f"Fetching kline data for contract pair: {contract_pair}")
-        info = get_kline_data(contract_pair)
+        info = get_kline_data(contract_pair, interval=time)
         logger.info(f"Data fetched successfully at: {datetime.now()}")
 
         list_return = [float(info[0]['high']), float(info[0]['low']), float(info[0]['close'])]
@@ -203,3 +203,5 @@ def get_closed_orders(symbol):
     
     except Exception as e:
         logger.info(f"Error in 'get_closed_orders_count' : {e} ")
+
+
