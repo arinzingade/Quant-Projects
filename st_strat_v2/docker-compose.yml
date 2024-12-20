@@ -1,8 +1,21 @@
-
 services:
-
-  trend_automation_service:
-    build: .
+  super_trend_coinswitch_service_1:
+    build:
+      context: .
+      dockerfile: DockerfileCS
     env_file:
       - .env
-    
+
+  super_trend_pi42_service_1:
+    build:
+      context: .
+      dockerfile: DockerfilePi42G
+    env_file:
+      - .env
+  
+  super_trend_cs_x_min:
+    build: 
+      context: .
+      dockerfile: DockerfilexMin
+    env_file:
+      - .env
