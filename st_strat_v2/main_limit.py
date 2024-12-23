@@ -26,7 +26,7 @@ fees_mult = int(os.getenv('FEES_MULT'))
 symbol = str(os.getenv('SYMBOL'))
 secret_key = os.getenv('API_SECRET_PI42')
 api_key = os.getenv('API_KEY_PI42')
-min_pct = os.getenv('MIN_PCT')
+min_pct = float(os.getenv('MIN_PCT'))
 
 api_trading_client = Pi42API(secret_key, api_key)
 
@@ -41,6 +41,7 @@ if __name__ == "__main__":
 
     df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
     min_points = 100000 * min_pct 
+    print("Min Points are: ",  min_points)
 
     while True:
         if datetime.now().second == 5:

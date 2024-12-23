@@ -49,7 +49,7 @@ class Pi42API:
             'marginAsset': 'INR',
             'deviceType': 'WEB',
             'userCategory': 'EXTERNAL',
-            'price': int(limit_price),
+            'price': limit_price,
             'stopPrice': int(limit_price),
         }
         data_to_sign = json.dumps(params, separators=(',', ':'))
@@ -156,3 +156,6 @@ def test():
     print(client)
 
     print(len(client.get_open_orders()))
+
+
+test()

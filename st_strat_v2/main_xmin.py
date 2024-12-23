@@ -116,4 +116,4 @@ if __name__ == "__main__":
                     place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
             
-            time.sleep(time_interval * 60)
+            time.sleep(time_interval * 30)
