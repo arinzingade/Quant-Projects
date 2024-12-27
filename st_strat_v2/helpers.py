@@ -263,4 +263,3 @@ def get_current_price(ticker):
         logging.exception(f"An error occurred while fetching the current price for {ticker}: {str(e)}")
         return None
 
-

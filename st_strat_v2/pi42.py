@@ -49,7 +49,7 @@ class Pi42API:
             'marginAsset': 'INR',
             'deviceType': 'WEB',
             'userCategory': 'EXTERNAL',
-            'price': limit_price,
+            'price': int(limit_price),
             'stopPrice': int(limit_price),
         }
         data_to_sign = json.dumps(params, separators=(',', ':'))
@@ -155,7 +155,4 @@ def test():
     client = Pi42API(api_secret, api_key)
     print(client)
 
-    print(len(client.get_open_orders()))
-
-
-test()
+    client.place_order('BTCUSDT','BUY','LIMIT',0.002, 97000)

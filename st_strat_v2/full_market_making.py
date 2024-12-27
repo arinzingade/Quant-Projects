@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     while True:
 
-        time.sleep(10)
+        time.sleep(5)
         print("Status:" , status)
         open_orders = api_trading_client.get_open_orders()
         print("Open Orders Count: ", open_orders)
@@ -58,18 +58,10 @@ if __name__ == "__main__":
             side = open_orders[0]['side']
 
             if side == 'BUY':
-                api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh_points)
-                time.sleep(1)
-                api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh_points)
+                api_trading_client.place_order(symbol, 'BUY', 'MARKET', qty)
 
             elif side == 'SELL':
-                api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh_points)
-                time.sleep(1)
-                api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh_points)
-
+                api_trading_client.place_order(symbol, 'SELL', 'MARKET', qty)
+                
             status = 0
-        
-        if len(open_orders) == 0:
-            status = 0
-
 
