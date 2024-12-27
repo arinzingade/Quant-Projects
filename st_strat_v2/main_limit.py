@@ -12,7 +12,7 @@ from helpers import (
     append_to_df,
     get_open_orders_count,
     is_buy_signal,
-    is_sell_signal
+    is_sell_signal,
 )
 from state import StateManager
 
@@ -26,6 +26,7 @@ fees_mult = int(os.getenv('FEES_MULT'))
 symbol = str(os.getenv('SYMBOL'))
 secret_key = os.getenv('API_SECRET_PI42')
 api_key = os.getenv('API_KEY_PI42')
+min_pct = float(os.getenv('MIN_PCT'))
 
 api_trading_client = Pi42API(secret_key, api_key)
 
@@ -39,6 +40,8 @@ if __name__ == "__main__":
     print("Qty: ", qty)
 
     df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
+    min_points = 100000 * min_pct 
+    print("Min Points are: ",  min_points)
 
     while True:
         if datetime.now().second == 5:
@@ -53,10 +56,8 @@ if __name__ == "__main__":
 
                 
             df = append_to_df(df, high, low, close)
+            
             df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
-
-            if len(df) > 200:
-                df = df.tail(100)
             
             current_price = list(df['Close'])[len(df['Close']) - 1]
             thresh = thresh_points(current_price, qty, fees_pct, fees_mult)
@@ -80,42 +81,33 @@ if __name__ == "__main__":
                 if is_buy_signal(df):
                     api_trading_client.cancel_all_orders()
                     api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
-                    time.sleep(2)
-                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
-                    api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - (thresh/2))
+                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, min_points)
+                    api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
                     status.set_status("long")
 
                 elif is_sell_signal(df):
                     api_trading_client.cancel_all_orders()
                     api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
-                    time.sleep(2)
-                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
-                    api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + (thresh/2))
+                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, min_points)
+                    api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
 
             elif status.get_status() == "short":
                 if is_buy_signal(df):
                     api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
-
-                    time.sleep(2)
                     api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
                     api_trading_client.cancel_all_orders()
-                    time.sleep(2)
-                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
-                    api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - (thresh/2))
+                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, min_points)
+                    api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
                     status.set_status("long")
 
             elif status.get_status() == "long":
                 if is_sell_signal(df):
                     api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
-
-                    time.sleep(2)
                     api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
                     api_trading_client.cancel_all_orders()
-
-                    time.sleep(2)
-                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
-                    api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + (thresh/2))
+                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, min_points)
+                    api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
                     status.set_status("short")
             
             time.sleep(55)

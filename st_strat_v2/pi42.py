@@ -155,4 +155,4 @@ def test():
     client = Pi42API(api_secret, api_key)
     print(client)
 
-    print(len(client.get_open_orders()))
+    client.place_order('BTCUSDT','BUY','LIMIT',0.002, 97000)
