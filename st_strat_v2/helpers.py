@@ -263,3 +263,14 @@ def get_current_price(ticker):
         logging.exception(f"An error occurred while fetching the current price for {ticker}: {str(e)}")
         return None
 
+def usdt_cs_account_balance():
+
+    balance = api_trading_client.futures_wallet_balance()
+    balance_list = balance['data']['base_asset_balances']
+
+    for asset in balance_list:
+        if asset['base_asset'] == 'USDT':
+            balance_usdt = asset['balances']['total_balance']
+            return float(balance_usdt)
+    
+    return "No USDT Balance"
