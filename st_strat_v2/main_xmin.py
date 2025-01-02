@@ -44,6 +44,8 @@ api_trading_client = ApiTradingClient(secret_key, api_key)
 
 init_price = 0
 
+thresh_value_updated = False
+
 if __name__ == "__main__":
 
     while True:
@@ -60,11 +62,9 @@ if __name__ == "__main__":
 
         df['st'], df['st_upt'], df['st_dt'], df['atr'] = get_supertrend(df['High'], df['Low'], df['Close'], 10, 3)
 
+        thresh_value_updated = True
+
         while True:
-            if datetime.now().hour == 0 and (datetime.now().minute >= 0 and datetime.now().minute <= 1.5*time_interval):
-                logger.info("Market Closed. Restarting the process for the NEW DAY...")
-                break
-                                              
             if datetime.now().second == 5 and datetime.now().minute % time_interval == 0:
 
                 current_balance_instance_dff = usdt_cs_account_balance() - current_balance
@@ -153,7 +153,8 @@ if __name__ == "__main__":
                 
                 time.sleep(time_interval * 60 - 10)
         
-        while datetime.now().time() >= dt_time(0, 0, 0, 0) and datetime.now().time() >= dt_time(0, 1, 0, 0):
+        while datetime.now().time() >= dt_time(18, 30, 0, 0) and datetime.now().time() >= dt_time(18, 31, 0, 0):
+            logger.info("Day Closed as THRESH reached. Waiting for the next day to start...")
             time.sleep(1)
             continue
         

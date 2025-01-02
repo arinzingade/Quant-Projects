@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             open_orders_count = len(api_trading_client.get_open_orders())
 
-            if open_orders_count == 0 or open_orders_count == 1:
+            if open_orders_count == 0:
                 api_trading_client.cancel_all_orders()
                 status.set_status("neutral")
                 print("STATUS updated to Neutral")  
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                     api_trading_client.cancel_all_orders()
                     api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
+                    #api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                     api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - (thresh/2))
                     status.set_status("long")
 
@@ -89,32 +89,32 @@ if __name__ == "__main__":
                     api_trading_client.cancel_all_orders()
                     api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
+                    #api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                     api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + (thresh/2))
                     status.set_status("short")
 
             elif status.get_status() == "short":
                 if is_buy_signal(df):
-                    api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
+                    api_trading_client.place_order(symbol, "BUY", "MARKET", qty*2)
 
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
+                    # api_trading_client.place_order(symbol, "BUY", "MARKET", qty)
                     api_trading_client.cancel_all_orders()
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
+                    #api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                     api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - (thresh/2))
                     status.set_status("long")
 
             elif status.get_status() == "long":
                 if is_sell_signal(df):
-                    api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
+                    api_trading_client.place_order(symbol, "SELL", "MARKET", qty * 2)
 
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
+                    #api_trading_client.place_order(symbol, "SELL", "MARKET", qty)
                     api_trading_client.cancel_all_orders()
 
                     time.sleep(2)
-                    api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
+                    #api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                     api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + (thresh/2))
                     status.set_status("short")
             
