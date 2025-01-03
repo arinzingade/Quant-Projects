@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
             total_volume += current_price * qty * 2
             
-            if total_volume > 660000:
+            if total_volume > 650000:
                 logger.info("Total volume exceeded 660000. Exiting...")
                 break
 
@@ -66,16 +66,12 @@ if __name__ == "__main__":
             side = open_orders[0]['side']
 
             if side == 'BUY':
-                api_trading_client.place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh_points)
+                api_trading_client.place_order(symbol, 'BUY', 'MARKET', qty)
                 time.sleep(1)
-                api_trading_client.place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh_points)
-                time.sleep(2)
 
             elif side == 'SELL':
-                api_trading_client.place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh_points)
+                api_trading_client.place_order(symbol, 'SELL', 'MARKET', qty)
                 time.sleep(1)
-                api_trading_client.place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh_points)
-                time.sleep(2)
 
             status = 0
 
