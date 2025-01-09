@@ -2,3 +2,4 @@ market_making/.env
 st_strat/.env
 st_strat_v2/.env
 liquidity/.env
+strat_v3/untrade-sdk
