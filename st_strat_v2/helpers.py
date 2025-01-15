@@ -78,7 +78,6 @@ def make_init_data(contract_pair, time = "1m"):
         logger.error(f"Error while making initial data: {e}")
         raise
 
-
 def call_every_one_minute(contract_pair, time = "1m"):
     try:
         logger.info(f"Fetching kline data for contract pair: {contract_pair}")

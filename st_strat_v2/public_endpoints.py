@@ -30,7 +30,7 @@ def get_24hr_ticker_update(contract_pair):
         print(f"An unexpected error occurred: {str(e)}")
     
 
-def get_kline_data(pair, interval = "1m", limit = 1):
+def get_kline_data(pair, interval = "5m", limit = 1):
     try:
         # User inputs
         # Prepare the request body (JSON)

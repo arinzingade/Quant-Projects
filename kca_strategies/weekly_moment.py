@@ -26,7 +26,6 @@ for i in range(1, len(stock_universe)):
     stock_ticker = stock_universe[i] + country_code
     valid_stock_array.append(stock_ticker)
 
-
 stock_list = ['ABB.NS', 'ACC.NS', 'AIAENG.NS', 'APLAPOLLO.NS', 'AUBANK.NS', 'AARTIIND.NS']
 df = yf.download(valid_stock_array, start=start_date, end=end_date, interval = '1wk')
 
@@ -152,4 +151,5 @@ plt.show()
 print(weeks_held)
 print(np.mean(weeks_held))
 
+print("Min Stock:", max_date_stock_pct_array)
 print("Max Stock:", max_date_stock_pct_array[len(max_date_stock_pct_array) - 1])
