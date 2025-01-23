@@ -14,8 +14,9 @@ import os
 warnings.filterwarnings("ignore")
 from helper import *
 
-
 from urllib.parse import quote
+
+from coinswitch import place_order
 
 # ## Untrade backtesting script
 from untrade.client import Client
@@ -294,17 +295,19 @@ def strat(data):
     return data
 
 from stream import make_init_data, append_to_dataframe, interval_to_seconds
-contract_pair = 'ETHUSDT'
-interval = '1m'
-time_interval = 1
 import time
 from datetime import datetime
 
 def main():
     #data = pd.read_csv("ETHUSDT_1h.csv")
     
-
-    data = make_init_data(contract_pair, interval, limit=1000)
+    symbol = os.getenv('SYMBOL')
+    qty = float(os.getenv('QTY'))
+    time_interval = int(os.getenv('TIME_INTERVAL'))
+    interval = str(time_interval) + 'm'
+    contract_pair = os.getenv('SYMBOL')
+    
+    data = make_init_data(contract_pair, interval, limit=100)
     processed_data = process_data(data)
     result_data = strat(processed_data)
 
@@ -324,21 +327,26 @@ def main():
             logger.info(f"Trade Type: {trade_type}")
 
             if trade_type == 'ENTRY SHORT':
-                pass
+                place_order(symbol = symbol, side = 'SELL', order_type='MARKET', qty = qty)
+
             elif trade_type == 'EXIT SHORT':
-                pass
+                place_order(symbol = symbol, side = 'BUY', order_type='MARKET', qty = qty)
+
             elif trade_type == 'ENTRY LONG':
-                pass
+                place_order(symbol = symbol, side = 'BUY', order_type='MARKET', qty = qty)
+
             elif trade_type == 'EXIT LONG':
-                pass
+                place_order(symbol = symbol, side = 'SELL', order_type='MARKET', qty = qty)
+
             elif trade_type == 'EXIT SHORT and ENTRY LONG':
-                pass
+                place_order(symbol = symbol, side = 'BUY', order_type='MARKET', qty = 2 * qty)
+
             elif trade_type == 'ENTRY LONG and EXIT SHORT':
-                pass
+                place_order(symbol = symbol, side = 'SELL', order_type='MARKET', qty = 2 * qty)
 
             time.sleep(interval_to_seconds(interval) - 5)
 
-    print(result_data)
+    #print(result_data)
     
     #csv_file_path = "resultsETH.csv"
     #result_data = result_data[['Timestamp', 'High', 'Low', 'Close', 'trade_type', 'signals']]

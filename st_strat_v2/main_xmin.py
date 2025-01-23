@@ -110,9 +110,9 @@ if __name__ == "__main__":
                         time.sleep(1)
                         place_order(symbol, "BUY", "MARKET", qty)
                         time.sleep(1)
-                        place_order(symbol, 'SELL', 'LIMIT', qty, current_price + 3.1 * thresh)
+                        place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                         time.sleep(1)
-                        place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
+                        place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - 2 * thresh)
                         status.set_status("long")
 
                     elif is_sell_signal(df):
@@ -120,9 +120,9 @@ if __name__ == "__main__":
                         time.sleep(1)
                         place_order(symbol, "SELL", "MARKET", qty)
                         time.sleep(1)
-                        place_order(symbol, 'BUY', 'LIMIT', qty, current_price - 3.1 * thresh)
+                        place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                         time.sleep(1)
-                        place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
+                        place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + 2 * thresh)
                         status.set_status("short")
 
                 elif status.get_status() == "short":
@@ -133,9 +133,9 @@ if __name__ == "__main__":
                         time.sleep(1)
                         cancel_all_orders()
                         time.sleep(1)
-                        place_order(symbol, 'SELL', 'LIMIT', qty, current_price + 3.1 * thresh)
+                        place_order(symbol, 'SELL', 'LIMIT', qty, current_price + thresh)
                         time.sleep(1)
-                        place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - thresh)
+                        place_order(symbol, 'SELL', 'STOP_MARKET', qty, current_price - 2 * thresh)
                         status.set_status("long")
 
                 elif status.get_status() == "long":
@@ -146,9 +146,9 @@ if __name__ == "__main__":
                         time.sleep(1)
                         cancel_all_orders()
                         time.sleep(1)
-                        place_order(symbol, 'BUY', 'LIMIT', qty, current_price - 3.1 * thresh)
+                        place_order(symbol, 'BUY', 'LIMIT', qty, current_price - thresh)
                         time.sleep(1)
-                        place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + thresh)
+                        place_order(symbol, 'BUY', 'STOP_MARKET', qty, current_price + 2 * thresh)
                         status.set_status("short")
                 
                 time.sleep(time_interval * 60 - 10)

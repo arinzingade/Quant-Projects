@@ -3,3 +3,5 @@ pandas
 ta
 tqdm
 requests
+cryptography
+python-dotenv

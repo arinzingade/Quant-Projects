@@ -6,8 +6,7 @@ from coinswitch import place_order
 app = Flask(__name__)
 
 @app.route('/api/v1/place_order', methods = ['GET', 'POST'])
-def place_order_method():
-    
+def place_order_method():  
     try:
         data = request.get_json()
         if not data:
