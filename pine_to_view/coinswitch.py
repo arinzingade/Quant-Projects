@@ -8,11 +8,23 @@ import json
 import os
 import time
 from dotenv import load_dotenv
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
+logger = logging.getLogger(__name__)
+
 
 load_dotenv()
 
 api_key=os.getenv('API_KEY')
 secret_key=os.getenv('SECRET')
+
+
 
 def generate_signature(method, endpoint, params, payload, secret_key):
     if method == "GET" and len(params) != 0:
@@ -88,7 +100,7 @@ def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 9500
         return (json.dumps(response.json(), indent=4))  
     
     except requests.exceptions.RequestException as e:
-        return (f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
 
 
 def cancel_all_orders():
