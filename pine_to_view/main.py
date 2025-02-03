@@ -4,6 +4,7 @@ from coin_class import ApiTradingClient
 from coinswitch import place_order
 from helpers import clone_orders
 import logging
+from tele_bot import TelegramBot
 
 app = Flask(__name__)
 
@@ -33,6 +34,9 @@ def place_order_method():
         status = place_order(api_key, secret_key, symbol, side, order_type, qty)
 
         clone_orders("env.json", symbol, side, order_type, qty)
+
+        TelegramBot(symbol, side)
+
         return jsonify({"message:": status})
 
     except Exception as e:

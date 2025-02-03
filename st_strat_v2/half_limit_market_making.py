@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     while True:
 
-        time.sleep(2)
+        time.sleep(5)
         print("Status:" , status)
         open_orders = api_trading_client.get_open_orders()
         print("Open Orders Count: ", open_orders)
