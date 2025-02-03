@@ -8,23 +8,12 @@ import json
 import os
 import time
 from dotenv import load_dotenv
-import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-
-logger = logging.getLogger(__name__)
-
+from coin_class import ApiTradingClient
 
 load_dotenv()
 
 api_key=os.getenv('API_KEY')
 secret_key=os.getenv('SECRET')
-
-
 
 def generate_signature(method, endpoint, params, payload, secret_key):
     if method == "GET" and len(params) != 0:
@@ -59,7 +48,7 @@ def get_signature(method, endpoint, params, epoch_time):
     signature = signature_bytes.hex()
     return signature
 
-def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 95000):
+def place_order(symbol, side, order_type, qty, price = 95000):
 
     if order_type == 'STOP_MARKET':
         reduce_only = True
@@ -97,10 +86,11 @@ def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 9500
 
         print(f"Response Status Code: {response.status_code}")
         print("Response Body:")
-        return (json.dumps(response.json(), indent=4))  
-    
+        print(json.dumps(response.json(), indent=4))  
     except requests.exceptions.RequestException as e:
-        logger.error(f"An error occurred: {e}")
+        print(f"An error occurred: {e}")
+        if response is not None:
+            print(f"Response Content: {response.text}")
 
 
 def cancel_all_orders():
@@ -127,3 +117,12 @@ def cancel_all_orders():
 
     print(response.text)
     return response
+
+#api_key = os.getenv('API_KEY_ARIN')
+#secret_key = os.getenv('SECRET_KEY_ARIN')
+
+#client = ApiTradingClient(api_key=api_key, secret_key=secret_key)
+
+#print(client)
+
+#print(client.futures_get_position(params={'exchange': 'EXCHANGE_2', 'symbol': 'BTCUSDT'}))

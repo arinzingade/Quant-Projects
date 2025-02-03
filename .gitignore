@@ -4,3 +4,6 @@ st_strat_v2/.env
 liquidity/.env
 strat_v3/untrade-sdk
 pine_to_view/.env
+strat_v3/.env
+renko_strat/.env
+pine_to_view/env.json

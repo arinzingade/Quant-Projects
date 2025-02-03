@@ -1,0 +1,60 @@
+{'data': [
+        {'branchCode': 'MWH', 'branchName': 'Mumbai Warehouse', 'supplierCode': 'ZADRRKTX', 'supplierName': 'Natures Spice', 'supplierTaxId': '27ACFPU0736Q1ZY', 'supplierInvoiceNumber': '000125', 'supplierInvoiceDate': '2025-01-22', 'poNumber': '122335', 'grnNumber': '124731', 'grnDate': '2025-01-22T11: 26: 25+05: 30', 'grnBusinessDay': '2025-01-22', 'itemCount': 1, 'itemsAmount': 50985, 'taxAmount': 6118.2, 'totalAmount': 57103.2, 'status': 'Final', 'taxes': [
+                {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 3059.1, 'taxableAmount': 50985
+                },
+                {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 3059.1, 'taxableAmount': 50985
+                }
+            ], 'discounts': [], 'charges': [], 'items': [
+                {'measuringUnit': 'ea', 'skuCode': '935', 'itemName': 'Barista', 'quantity': 515, 'isIncludesTax': False, 'unitCost': 99, 'itemAmount': 50985, 'taxAmount': 6118.2, 'totalAmount': 57103.2, 'taxes': [
+                        {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 3059.1, 'taxableAmount': 50985
+                        },
+                        {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 3059.1, 'taxableAmount': 50985
+                        }
+                    ], 'batches': [
+                        {'quantity': 515
+                        }
+                    ], 'inventoryItemName': 'Barista', 'inventorySKU': '935', 'conversion': 0.5, 'categoryName': 'Material', 'subCategoryName': 'CE Material', 'itemType': 'Material', 'charges': [], 'itemAmountBeforeTax': 50985
+                }
+            ], 'shippingAddress': {'addressLine': 'Plot No-105/108,Jawahar Co-op Industrial Estate, Kamothe, Panvel', 'city': 'Navi Mumbai', 'state': 'Maharashtra', 'country': 'India', 'zip': '410206', 'latitude': 19.0181835, 'longitude': 73.1025815
+            }, 'supplierAddress': {'addressLine': '325,SAMUEL STREET VADGADI,MASJID', 'city': 'Mumbai', 'state': 'Maharashtra', 'country': 'India', 'zip': '400003', 'latitude': 18.9518278, 'longitude': 72.8382898
+            }, 'itemsAmountBeforeTax': 50985
+        },
+        {'branchCode': 'MWH', 'branchName': 'Mumbai Warehouse', 'supplierCode': 'SFP', 'supplierName': 'SFP Foods Private Limited', 'supplierTaxId': '27AATCS4951N1ZE', 'supplierInvoiceNumber': 'Challan No-5732', 'supplierInvoiceDate': '2025-01-15', 'poNumber': '124746', 'grnNumber': '124747', 'grnDate': '2025-01-22T13: 26: 17+05: 30', 'grnBusinessDay': '2025-01-22', 'itemCount': 3, 'itemsAmount': 142751.75, 'taxAmount': 17130.22, 'totalAmount': 159881.97, 'status': 'Final', 'taxes': [
+                {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 8565.11, 'taxableAmount': 142751.75
+                },
+                {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 8565.11, 'taxableAmount': 142751.75
+                }
+            ], 'discounts': [], 'charges': [], 'items': [
+                {'measuringUnit': 'ea', 'skuCode': '295', 'itemName': 'Lucknowi Sheek Starter', 'quantity': 1500, 'isIncludesTax': False, 'unitCost': 34.87, 'itemAmount': 52305, 'taxAmount': 6276.6, 'totalAmount': 58581.6, 'taxes': [
+                        {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 3138.3, 'taxableAmount': 52305
+                        },
+                        {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 3138.3, 'taxableAmount': 52305
+                        }
+                    ], 'batches': [
+                        {'quantity': 1500
+                        }
+                    ], 'inventoryItemName': 'Lucknowi Sheek Starter', 'inventorySKU': '295', 'conversion': 1, 'categoryName': 'Starters', 'subCategoryName': 'CE Starters', 'itemType': 'Material', 'charges': [], 'itemAmountBeforeTax': 52305
+                },
+                {'measuringUnit': 'ea', 'skuCode': '550', 'itemName': 'Mushroom Galouti', 'quantity': 416, 'isIncludesTax': False, 'unitCost': 34.75, 'itemAmount': 14456, 'taxAmount': 1734.72, 'totalAmount': 16190.72, 'taxes': [
+                        {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 867.36, 'taxableAmount': 14456
+                        },
+                        {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 867.36, 'taxableAmount': 14456
+                        }
+                    ], 'batches': [
+                        {'quantity': 416
+                        }
+                    ], 'inventoryItemName': 'Mushroom Galouti', 'inventorySKU': '550', 'conversion': 1, 'categoryName': 'Starters', 'subCategoryName': 'CE Starters', 'itemType': 'Material', 'charges': [], 'itemAmountBeforeTax': 14456
+                },
+                {'measuringUnit': 'ea', 'skuCode': '296', 'itemName': 'Red Biryani Chicken Tikka (Cut)', 'quantity': 1661, 'isIncludesTax': False, 'unitCost': 45.75, 'itemAmount': 75990.75, 'taxAmount': 9118.9, 'totalAmount': 85109.65, 'taxes': [
+                        {'taxName': 'SGST 6', 'percentage': 6, 'taxAmount': 4559.45, 'taxableAmount': 75990.75
+                        },
+                        {'taxName': 'CGST 6', 'percentage': 6, 'taxAmount': 4559.45, 'taxableAmount': 75990.75
+                        }
+                    ], 'batches': [
+                        {'quantity': 1661
+                        }
+                    ], 'inventoryItemName': 'Red Biryani Chicken Tikka (Cut)', 'inventorySKU': '296', 'conversion': 1, 'categoryName': 'Protein', 'subCategoryName': 'CE Protein', 'itemType': 'Material', 'charges': [], 'itemAmountBeforeTax': 75990.75
+                }
+            ], 'shippingAddress': {'addressLine': 'Plot No-105/108,Jawahar Co-op Industrial Estate, Kamothe, Panvel', 'city': 'Navi Mumbai', 'state': 'Maharashtra', 'country': 'India', 'zip': '410206', 'latitude': 19.0181835, 'longitude': 73.1025815
+            }, 'supplierAddress': {'addressLine': '3/8,JOGANI INDUSTRIAL COMPLEX SIDDHI VINAYAK CO-OP IND PREMISES V.N.PURAV MARG CHUNABATTI.', 'city': 'MUMBAI', 'state': 'MAHARASHTRA', 'country': 'INDIA', 'zip': '400022'
+            }

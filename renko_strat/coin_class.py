@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-
 api_key = os.getenv('API_KEY')
 
 
@@ -188,7 +187,8 @@ class ApiTradingClient:
         return self.make_request("POST", "/trade/api/v2/futures/orders/closed", payload=payload)
 
     def futures_get_position(self, params: dict = {}):
-        return self.make_request("GET", "/trade/api/v2/futures/positions", params=params)
+        response = self.make_request("GET", "/trade/api/v2/futures/positions", params=params)
+        return response
 
     def futures_get_transactions(self, params: dict = {}):
         return self.make_request("GET", "/trade/api/v2/futures/transactions", params=params)

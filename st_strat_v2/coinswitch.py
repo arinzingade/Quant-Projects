@@ -8,6 +8,7 @@ import json
 import os
 import time
 from dotenv import load_dotenv
+from coin_class import ApiTradingClient
 
 load_dotenv()
 
@@ -116,3 +117,12 @@ def cancel_all_orders():
 
     print(response.text)
     return response
+
+#api_key = os.getenv('API_KEY_ARIN')
+#secret_key = os.getenv('SECRET_KEY_ARIN')
+
+#client = ApiTradingClient(api_key=api_key, secret_key=secret_key)
+
+#print(client)
+
+#print(client.futures_get_position(params={'exchange': 'EXCHANGE_2', 'symbol': 'BTCUSDT'}))
