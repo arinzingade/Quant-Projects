@@ -1,12 +1,14 @@
-
 services:
   server:
-    build: DockerfileServer
+    build:
+      context: .
+      dockerfile: DockerfileServer
     ports:
       - "5000:5000"
   
   bot:
-    build: Dockerfile
+    build:
+      context: .
+      dockerfile: Dockerfile
     depends_on:
       - server
-
