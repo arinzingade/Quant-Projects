@@ -1,0 +1,12 @@
+
+services:
+  server:
+    build: DockerfileServer
+    ports:
+      - "5000:5000"
+  
+  bot:
+    build: Dockerfile
+    depends_on:
+      - server
+
