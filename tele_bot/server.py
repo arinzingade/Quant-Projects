@@ -2,8 +2,12 @@
 
 from flask import Flask, request, jsonify
 from coin_class import ApiTradingClient
-from coinswitch import place_order
+from coinswitch import place_order, update_leverage
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -30,7 +34,10 @@ def place_order_method():
         order_type = data.get('order_type')
         qty = data.get('qty')
 
+        leverage = os.getenv('LEVERAGE')
+        update_leverage(api_key, secret_key, symbol, leverage)
         status = place_order(api_key, secret_key, symbol, side, order_type, qty)
+        
         return jsonify({"message:": status}), 200
 
     except Exception as e:
