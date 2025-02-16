@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
@@ -54,7 +54,9 @@ def get_signature(method, endpoint, params, epoch_time):
     signature = signature_bytes.hex()
     return signature
 
-def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 95000):
+def place_order(api_key, secret_key, symbol, side, order_type, qty, price = "95000"):
+
+    logger.info(f"Placing order: Symbol={symbol}, Side={side}, OrderType={order_type}, Qty={qty}, Price={price}")
 
     if order_type == 'STOP_MARKET':
         reduce_only = True
@@ -74,6 +76,8 @@ def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 9500
         "reduce_only": reduce_only         
     }
 
+    print(payload)
+
     headers = {
         'Content-Type': 'application/json',
         'X-AUTH-SIGNATURE': generate_signature( 
@@ -90,42 +94,77 @@ def place_order(api_key, secret_key, symbol, side, order_type, qty, price = 9500
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()  
 
+        logger.info(f"Order placed successfully")
+
         return [(json.dumps(response.json(), indent=4)), response.status_code]
     
-    except requests.exceptions.RequestException as e:
-        logger.error(f"An error occurred: {e}")
+    except Exception as e:
+        logger.debug(f"An error occurred in placing orders: {e}")
 
 
 def cancel_all_orders_all_symbols(api_key, secret_key):
 
-    url = "https://coinswitch.co/trade/api/v2/futures/cancel_all"
+    try:
+        url = "https://coinswitch.co/trade/api/v2/futures/cancel_all"
 
-    payload = {
-        "exchange" : "EXCHANGE_2",
-    }
+        payload = {
+            "exchange" : "EXCHANGE_2",
+        }
 
-    headers = {
-    'Content-Type': 'application/json',
-    'X-AUTH-SIGNATURE':generate_signature( 
-            "POST", 
-            "/trade/api/v2/futures/cancel_all", 
-            {}, 
-            payload, 
-            secret_key
-        ),
-    'X-AUTH-APIKEY': api_key
-    }
+        headers = {
+        'Content-Type': 'application/json',
+        'X-AUTH-SIGNATURE':generate_signature( 
+                "POST", 
+                "/trade/api/v2/futures/cancel_all", 
+                {}, 
+                payload, 
+                secret_key
+            ),
+        'X-AUTH-APIKEY': api_key
+        }
 
-    response = requests.request("POST", url, headers=headers, json=payload)
+        response = requests.request("POST", url, headers=headers, json=payload)
 
-    print(response.text)
-    return response
+        logger.info(f"Cancelled All orders for ALL symbols")
+
+        #print(response.text)
+        return response
+
+    except Exception as e:
+        logger.error(f"Error in Cancelling All orders: {e}")
 
 
 def cancel_order_by_id(api_key, secret_key, order_id):
-    pass
+    
+    url = "https://coinswitch.co/trade/api/v2/futures/order"
 
-def cancel_orders_for_a_symbol(api_key, secret_key, symbol):
+    payload = {
+        "exchange": "EXCHANGE_2",
+        "order_id": order_id
+    }
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-AUTH-SIGNATURE': generate_signature( 
+            "DELETE", 
+            "/trade/api/v2/futures/order", 
+            {}, 
+            payload, 
+            secret_key
+        ), 
+        'X-AUTH-APIKEY': api_key
+        }
+    
+    try:
+        response = requests.request("DELETE", url, headers=headers, json=payload)
+
+        logger.info(f"Cancelled Order of order id: {order_id}")
+        #print("Response JSON:", response.json())
+
+    except Exception as e:
+        logger.error(f"An error while cancelling order by ID: {e}")
+
+def cancel_orders_for_a_symbol(api_key, secret_key, symbol, order_type):
 
     payload = {
         "exchange": "EXCHANGE_2",
@@ -151,38 +190,59 @@ def cancel_orders_for_a_symbol(api_key, secret_key, symbol):
         response = response.json()
         response = response['data']['orders']
 
-        for open_orders in response:
-            print(open_orders['order_id'])
+        #print(response)
 
+        response_dict = {}
+
+        for open_orders in response:
+
+            if order_type == open_orders['order_type'] == 'LIMIT':
+                cancel_order_by_id(api_key, secret_key, open_orders['order_id'])
+                response_dict['LIMIT_QTY'] = open_orders['quantity']
+                logger.info(f"Cancelled LIMIT order for {symbol}")
+            
+            if order_type == open_orders['order_type'] == 'STOP_MARKET':
+                cancel_order_by_id(api_key, secret_key, open_orders['order_id'])
+                response_dict['STOP_MARKET_QTY'] = open_orders['quantity']
+                logger.info(f"Cancelled STOP_MARKET order for {symbol}")
+
+        return response_dict
+    
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred while Cancelling Orders: {e}")
 
 def update_leverage(api_key, secret_key, symbol, leverage):
 
-    url = "https://coinswitch.co/trade/api/v2/futures/leverage"
+    try:
 
-    payload = {
-        "symbol": symbol,
-        "exchange" : "EXCHANGE_2",
-        "leverage": int(leverage)
-    }
+        url = "https://coinswitch.co/trade/api/v2/futures/leverage"
 
-    headers = {
-    'Content-Type': 'application/json',
-    'X-AUTH-SIGNATURE':generate_signature( 
-            "POST", 
-            "/trade/api/v2/futures/leverage", 
-            {}, 
-            payload, 
-            secret_key
-        ),
-    'X-AUTH-APIKEY': api_key
-    }
+        payload = {
+            "symbol": symbol,
+            "exchange" : "EXCHANGE_2",
+            "leverage": int(leverage)
+        }
 
-    response = requests.request("POST", url, headers=headers, json=payload)
+        headers = {
+        'Content-Type': 'application/json',
+        'X-AUTH-SIGNATURE':generate_signature( 
+                "POST", 
+                "/trade/api/v2/futures/leverage", 
+                {}, 
+                payload, 
+                secret_key
+            ),
+        'X-AUTH-APIKEY': api_key
+        }
 
-    print(response.text)
-    return response
+        response = requests.request("POST", url, headers=headers, json=payload)
+        logger.info(f"Updated Leverage for {symbol} to leverage: {leverage}")
+
+        #print(response.text)
+        return response
+
+    except Exception as e:
+        logger.error(f"Error while updating the leverage: {e}")
 
 
 def get_instrument_info(api_key, secret_key, symbol):
@@ -207,10 +267,11 @@ def get_instrument_info(api_key, secret_key, symbol):
         max_leverage = response[symbol]['max_leverage']
         #print(min_qty)
 
+        logger.info(f"Fetched MIN QTY and MAX Leverage")
         return float(min_qty), float(max_leverage)
     
     except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
+        logger.error(f"Request error to get instrument info: {e}")
 
 
 def get_wallet_balance(api_key, secret_key):
@@ -233,12 +294,12 @@ def get_wallet_balance(api_key, secret_key):
             if asset['base_asset'] == 'USDT':
                 usdt_wallet_balance = asset['balances']['total_balance']
         
-        print(usdt_wallet_balance)
-
+        #print(usdt_wallet_balance)
+        logger.info("Successfully fetched Wallet Balance")
         return usdt_wallet_balance
     
     except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
+        logger.error(f"Request error while fetching Wallet Balance: {e}")
 
 def get_24hr_ticker_update(contract_pair):
 
@@ -285,41 +346,30 @@ def get_current_price(ticker):
 
 def position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol):
     
-    # $1000
-    usdt_balance = float(get_wallet_balance(api_key, secret_key))
+    try:
+        # $1000
+        usdt_balance = float(get_wallet_balance(api_key, secret_key))
 
-    # $10
-    risk_capital = usdt_balance * risk_pct
-    #print("Risk Capital: ", risk_capital)
+        # $10
+        risk_capital = usdt_balance * risk_pct
+        #print("Risk Capital: ", risk_capital)
 
-    # $500
-    position_size_usdt = (risk_capital / sl_pct) 
-    #print("Position Size USDT: ", position_size_usdt)
+        # $500
+        position_size_usdt = (risk_capital / sl_pct) 
+        #print("Position Size USDT: ", position_size_usdt)
 
-    current_market_price_ticker = get_current_price(symbol)
+        current_market_price_ticker = get_current_price(symbol)
 
-    min_qty_symbol, max_leverage_coinswitch = get_instrument_info(api_key, secret_key, symbol)
-    #print("Min Qty Symbol: ", min_qty_symbol)
-    #print("Max Leverage from Coinswitch: ", max_leverage_coinswitch)
+        min_qty_symbol, max_leverage_coinswitch = get_instrument_info(api_key, secret_key, symbol)
+        #print("Min Qty Symbol: ", min_qty_symbol)
+        #print("Max Leverage from Coinswitch: ", max_leverage_coinswitch)
 
-    qty = max(position_size_usdt / current_market_price_ticker, min_qty_symbol)
-    
-    max_leverage = min(float(position_size_usdt) / float(risk_capital), float(max_leverage_coinswitch))
+        qty = max(position_size_usdt / current_market_price_ticker, min_qty_symbol)
+        
+        max_leverage = min(float(position_size_usdt) / float(risk_capital), float(max_leverage_coinswitch))
 
-    return qty, max_leverage
+        logger.info(f"Calculated position size as: {qty} and Levarage as {max_leverage}")
+        return qty, max_leverage
 
-
-
-qty, max_leverage = position_size_calc("5ba0320e37ac72356c58b20b0d295382c62a8e092b7ab966da8ac99cb186ff22",
-                   "718d6fb892f6de02f3449050f1902b088c3df3b66dd203995bbe7f014ab35459",
-                   0.01,
-                   0.02,
-                   'BNBUSDT')
-
-
-print("Qty: ", qty)
-print("Leverage: ", max_leverage)
-
-#cancel_orders("5ba0320e37ac72356c58b20b0d295382c62a8e092b7ab966da8ac99cb186ff22",
-              #"718d6fb892f6de02f3449050f1902b088c3df3b66dd203995bbe7f014ab35459",
-              #'BTCUSDT')
+    except Exception as e:
+        logger.error(f"Error in fetching position size calculation: {e}")

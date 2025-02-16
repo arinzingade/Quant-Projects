@@ -7,69 +7,145 @@ from aiogram.types import Message
 import asyncio
 from dotenv import load_dotenv
 import os
-load_dotenv()
+from coinswitch import (place_order, position_size_calc, 
+                        update_leverage, get_current_price, 
+                        cancel_orders_for_a_symbol)
+import logging
+import time
 
-# Telegram Bot Token
+# Load environment variables
+load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 API_URL = os.getenv('API_URL')
-DEFAULT_QTY = "0.002" 
 
 # Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 logging.basicConfig(level=logging.INFO)
 
-# Regex pattern to extract trade order details
-ORDER_PATTERN = re.compile(
-    r"symbol:\s*(\S+)\s*"
-    r"side:\s*(\S+)\s*"
-    r"order_type:\s*(\S+)\s*"
-    r"price:\s*(\d+\.?\d*)"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
 )
 
-async def send_order(data: dict):
-    """Send order data as a POST request."""
-    async with aiohttp.ClientSession() as session:
-        async with session.post(API_URL, json=data) as response:
-            return await response.text()
+logger = logging.getLogger(__name__)
+
+# Define regex patterns
+ORDER_PATTERN = re.compile(
+    r"tag:\s*(\w+)\s*"                      # Extract tag type (Required)
+    r"symbol:\s*(\S+)\s*"                   # Extract symbol (Required)
+    r"(?:side:\s*(\S+))?\s*"                # Extract side (Optional)
+    r"(?:order_type:\s*(\S+))?\s*"          # Extract order_type (Optional)
+    r"(?:price:\s*(\d+\.?\d*))?\s*"        # Extract price (Optional)
+    r"(?:risk_pct:\s*(\d+\.?\d*))?\s*"     # Extract risk_pct (Optional)
+    r"(?:sl_pct:\s*(\d+\.?\d*))?\s*"       # Extract sl_pct (Optional)
+    r"(?:tp_pct:\s*(\d+\.?\d*))?\s*",      # Extract tp_pct (Optional)
+    re.DOTALL
+)
 
 @dp.message()
 async def handle_message(message: Message):
-    """Parse message and send trade order."""
+    """Parse incoming trade messages and execute orders."""
     match = ORDER_PATTERN.search(message.text)
-    if match:
-        symbol, side, order_type, price = match.groups()
+    if not match:
+        await message.reply("Invalid order format. Please check your input.")
+        return
 
-        with open('env.json', 'r') as file:
-            credentials = json.load(file).get("credentials", [])
-        
-        for creds in credentials:
+    tag, symbol, side, order_type, price, risk_pct, sl_pct, tp_pct = match.groups()
+
+    logger.info(f"tag: {tag}")
+    logger.info(f"symbol: {symbol}")
+    logger.info(f"side: {side}")
+    logger.info(f"order_type: {order_type}")
+    logger.info(f"price: {price}")
+    logger.info(f"risk_pct: {risk_pct}")
+    logger.info(f"sl_pct: {sl_pct}")
+    logger.info(f"tp_pct: {tp_pct}")
+
+    price = float(price) if price else None
+    risk_pct = float(risk_pct) if risk_pct else None
+    sl_pct = float(sl_pct) if sl_pct else None
+    tp_pct = float(tp_pct) if tp_pct else None
+
+    with open('env.json', 'r') as file:
+        credentials = json.load(file).get("credentials", [])
     
-            order_data = {
-                "api_key": creds['API_KEY'],
-                "api_secret": creds['API_SECRET'],
-                "symbol": symbol,
-                "side": side.upper(),
-                "order_type": order_type.upper(),
-                "price": float(price),
-                "qty": DEFAULT_QTY,
-            }
+    for creds in credentials:
+        api_key = creds['API_KEY']
+        secret_key = creds['API_SECRET']
+
+        if tag == "init":
             
-            response = await send_order(order_data)
-            response_msg = "Success"
+            try:
+                qty, leverage = position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol)
+                update_leverage(api_key, secret_key, symbol, leverage)
+                current_price = get_current_price(symbol)
+                # Place Market Order
+                place_order(api_key, secret_key, symbol, side, 'MARKET', qty)
 
-            display_order_data = {
-                "symbol": symbol,
-                "side": side.upper(),
-                "order_type": order_type.upper(),
-                "price": float(price),
-                "qty": DEFAULT_QTY,
-            }
+                # Calculate TP/SL prices
+                if tp_pct and side.upper() == 'BUY':
+                    tp_price = current_price * (1 + tp_pct)
+                    sl_price = current_price * (1 - sl_pct)
 
-            await message.reply(f"Order Sent:\n{json.dumps(display_order_data, indent=4)}\nResponse: {response_msg}")
-    else:
-        await message.reply("Invalid order format. Please use the format:\n\n"
-                          "symbol: BTCUSDT\nside: BUY\norder_type: MARKET\nprice: 95000")
+                    place_order(api_key, secret_key, symbol, 'SELL', 'LIMIT', qty, tp_price)
+                    place_order(api_key, secret_key, symbol, 'SELL', 'STOP_MARKET', 0, sl_price)
+
+                elif sl_pct and side.upper() == 'SELL':
+                    tp_price = current_price * (1 - tp_pct)
+                    sl_price = current_price * (1 + sl_pct)
+
+                    place_order(api_key, secret_key, symbol, 'BUY', 'LIMIT', qty, tp_price)
+                    place_order(api_key, secret_key, symbol, 'BUY', 'STOP_MARKET', 0, sl_price)
+
+                response_msg = f"Market Order, TP & SL placed successfully for {symbol}."
+                await message.reply(response_msg)
+            
+            except:
+                response_msg = f"There was an error in the message!"
+                await message.reply(response_msg)
+        
+        if tag == "modify_tp":
+            try:
+                response_dict = cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
+                qty = response_dict['LIMIT_QTY']
+                tp_price = price
+                place_order(api_key, secret_key, symbol, side, 'LIMIT', qty, float(tp_price))
+                
+                response_msg = f"TP on {side} side for {symbol} modified to {price}."
+                await message.reply(response_msg)
+
+            except Exception as e:
+                response_msg = f"There was an error! {e}"
+                await message.reply(response_msg)
+
+        if tag == "trail_sl":
+            try:
+                response_dict = cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'STOP_MARKET')
+                qty = float(response_dict['STOP_MARKET_QTY'])
+                print("Stop Market Qty: ", qty)
+
+                sl_price = price
+                place_order(api_key, secret_key, symbol, side, 'STOP_MARKET', 0, float(sl_price))
+
+            except Exception as e:
+                response_msg = f"There was an error!"
+                await message.reply(response_msg)
+
+        if tag == "cancel_all":
+            try:
+                cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
+                cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'STOP_MARKET')
+                response_msg = f"Cancelled all LIMIT and STOP MARKET orders for {symbol}."
+                await message.reply(response_msg)
+            except Exception as e:
+                response_msg = f"There was an error!"
+                await message.reply(response_msg)
+
+        else:
+            message.reply(f"Unknown tag: {tag}")
+            return
 
 async def main():
     await dp.start_polling(bot)
