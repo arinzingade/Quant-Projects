@@ -11,9 +11,8 @@ from coinswitch import (place_order, position_size_calc,
                         update_leverage, get_current_price, 
                         cancel_orders_for_a_symbol)
 import logging
-import time
 
-# Load environment variables
+
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 API_URL = os.getenv('API_URL')
@@ -88,6 +87,10 @@ async def handle_message(message: Message):
                 if tp_pct and side.upper() == 'BUY':
                     tp_price = current_price * (1 + tp_pct)
                     sl_price = current_price * (1 - sl_pct)
+                    
+                    tp_price = str(tp_price)
+                    sl_price = str(sl_price)
+                    qty = str(qty)
 
                     place_order(api_key, secret_key, symbol, 'SELL', 'LIMIT', qty, tp_price)
                     place_order(api_key, secret_key, symbol, 'SELL', 'STOP_MARKET', 0, sl_price)
@@ -95,6 +98,10 @@ async def handle_message(message: Message):
                 elif sl_pct and side.upper() == 'SELL':
                     tp_price = current_price * (1 - tp_pct)
                     sl_price = current_price * (1 + sl_pct)
+
+                    tp_price = str(tp_price)
+                    sl_price = str(sl_price)
+                    qty = str(qty)
 
                     place_order(api_key, secret_key, symbol, 'BUY', 'LIMIT', qty, tp_price)
                     place_order(api_key, secret_key, symbol, 'BUY', 'STOP_MARKET', 0, sl_price)
@@ -109,9 +116,12 @@ async def handle_message(message: Message):
         if tag == "modify_tp":
             try:
                 response_dict = cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
+
                 qty = response_dict['LIMIT_QTY']
-                tp_price = price
-                place_order(api_key, secret_key, symbol, side, 'LIMIT', qty, float(tp_price))
+                tp_price = str(price)
+                qty = str(qty)
+
+                place_order(api_key, secret_key, symbol, side, 'LIMIT', qty, tp_price)
                 
                 response_msg = f"TP on {side} side for {symbol} modified to {price}."
                 await message.reply(response_msg)
@@ -126,8 +136,13 @@ async def handle_message(message: Message):
                 qty = float(response_dict['STOP_MARKET_QTY'])
                 print("Stop Market Qty: ", qty)
 
-                sl_price = price
-                place_order(api_key, secret_key, symbol, side, 'STOP_MARKET', 0, float(sl_price))
+                sl_price = str(price)
+                qty = str(qty)
+
+                place_order(api_key, secret_key, symbol, side, 'STOP_MARKET', 0, sl_price)
+                
+                response_msg = f"Stop Loss Market on {side} side for {symbol} modified to {price}."
+                await message.reply(response_msg)
 
             except Exception as e:
                 response_msg = f"There was an error!"
