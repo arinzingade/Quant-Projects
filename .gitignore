@@ -7,3 +7,5 @@ pine_to_view/.env
 strat_v3/.env
 renko_strat/.env
 pine_to_view/env.json
+tele_bot/env.json
+tele_bot/.env
