@@ -32,15 +32,16 @@ logger = logging.getLogger(__name__)
 
 # Define regex patterns
 ORDER_PATTERN = re.compile(
-    r"tag:\s*(\w+)\s*"                      # Extract tag type (Required)
-    r"symbol:\s*(\S+)\s*"                   # Extract symbol (Required)
-    r"(?:side:\s*(\S+))?\s*"                # Extract side (Optional)
-    r"(?:order_type:\s*(\S+))?\s*"          # Extract order_type (Optional)
-    r"(?:price:\s*(\d+\.?\d*))?\s*"        # Extract price (Optional)
-    r"(?:risk_pct:\s*(\d+\.?\d*))?\s*"     # Extract risk_pct (Optional)
-    r"(?:sl_pct:\s*(\d+\.?\d*))?\s*"       # Extract sl_pct (Optional)
-    r"(?:tp_pct:\s*(\d+\.?\d*))?\s*",      # Extract tp_pct (Optional)
-    re.DOTALL
+    r"tag:\s*(\w+)\s*"                   # Extract tag type (Required)
+    r"symbol:\s*(\S+)\s*"                 # Extract symbol (Required)
+    r"(?:side:\s*(\S+))?\s*"              # Extract side (Optional)
+    r"(?:order_type:\s*(\S+))?\s*"        # Extract order_type (Optional)
+    r"(?:price:\s*(\d+\.?\d*))?\s*"       # Extract price (Optional)
+    r"(?:risk_pct:\s*(\d+\.?\d*))?\s*"    # Extract risk_pct (Optional)
+    r"(?:sl_pct:\s*(\d+\.?\d*))?\s*"      # Extract sl_pct (Optional)
+    r"(?:tp_pct:\s*(\d+\.?\d*))?\s*"      # Extract tp_pct (Optional)
+    r"(?:qty:\s*(\d+\.?\d*))?\s*",        # Extract qty (Optional)
+    re.DOTALL  # Allow matching across multiple lines
 )
 
 @dp.message()
@@ -51,7 +52,7 @@ async def handle_message(message: Message):
         await message.reply("Invalid order format. Please check your input.")
         return
 
-    tag, symbol, side, order_type, price, risk_pct, sl_pct, tp_pct = match.groups()
+    tag, symbol, side, order_type, price, risk_pct, sl_pct, tp_pct, qty = match.groups()
 
     logger.info(f"tag: {tag}")
     logger.info(f"symbol: {symbol}")
@@ -61,6 +62,7 @@ async def handle_message(message: Message):
     logger.info(f"risk_pct: {risk_pct}")
     logger.info(f"sl_pct: {sl_pct}")
     logger.info(f"tp_pct: {tp_pct}")
+    logger.info(f"Qty: {qty}")
 
     price = float(price) if price else None
     risk_pct = float(risk_pct) if risk_pct else None
@@ -70,12 +72,18 @@ async def handle_message(message: Message):
     with open('env.json', 'r') as file:
         credentials = json.load(file).get("credentials", [])
     
-    for creds in credentials:
-        api_key = creds['API_KEY']
-        secret_key = creds['API_SECRET']
+    account_no = 0
 
-        if tag == "init":
-            
+    if tag == "init":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
+            #print(api_key)
+            #print(secret_key)
+        
             try:
                 qty, leverage = position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol)
                 update_leverage(api_key, secret_key, symbol, leverage)
@@ -106,14 +114,20 @@ async def handle_message(message: Message):
                     place_order(api_key, secret_key, symbol, 'BUY', 'LIMIT', qty, tp_price)
                     place_order(api_key, secret_key, symbol, 'BUY', 'STOP_MARKET', 0, sl_price)
 
-                response_msg = f"Market Order, TP & SL placed successfully for {symbol}."
+                response_msg = f"For account {account_no} Market Order, TP & SL placed successfully for {symbol}."
                 await message.reply(response_msg)
             
             except:
-                response_msg = f"There was an error in the message!"
+                response_msg = f"For account {account_no}, There was an error in the message!"
                 await message.reply(response_msg)
-        
-        if tag == "modify_tp":
+    
+    elif tag == "modify_tp":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
             try:
                 response_dict = cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
 
@@ -123,14 +137,63 @@ async def handle_message(message: Message):
 
                 place_order(api_key, secret_key, symbol, side, 'LIMIT', qty, tp_price)
                 
-                response_msg = f"TP on {side} side for {symbol} modified to {price}."
+                response_msg = f"For account {account_no}, TP on {side} side for {symbol} modified to {price}."
                 await message.reply(response_msg)
 
             except Exception as e:
-                response_msg = f"There was an error! {e}"
+                response_msg = f"For account {account_no}, There was an error! {e}"
+                await message.reply(response_msg)
+    
+    elif tag == "place_tp":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
+            tp_price = str(price)
+            qty = str(qty)
+
+            try:
+                place_order(api_key, secret_key, symbol, side, 'LIMIT', qty, tp_price)
+                response_msg = f"For account {account_no}, TP on {side} side for {symbol} placed AT {price}."
+                await message.reply(response_msg)
+            
+            except Exception as e:
+                response_msg = f"For account {account_no}, There was an error! {e}"
+                await message.reply(response_msg)
+    
+    elif tag == "place_sl":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
+            sl_price = str(price)
+            side = str(side)
+            
+            if qty:
+                qty = str(qty)
+            else:
+                qty = 0
+
+            try:
+                place_order(api_key, secret_key, symbol, side, 'STOP_MARKET', qty, sl_price)
+                response_msg = f"For account {account_no}, SL on {side} side for {symbol} placed AT {price}."
+                await message.reply(response_msg)
+            
+            except Exception as e:
+                response_msg = f"For account {account_no}, There was an error! {e}"
                 await message.reply(response_msg)
 
-        if tag == "trail_sl":
+    elif tag == "trail_sl":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
             try:
                 response_dict = cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'STOP_MARKET')
                 qty = float(response_dict['STOP_MARKET_QTY'])
@@ -141,26 +204,53 @@ async def handle_message(message: Message):
 
                 place_order(api_key, secret_key, symbol, side, 'STOP_MARKET', 0, sl_price)
                 
-                response_msg = f"Stop Loss Market on {side} side for {symbol} modified to {price}."
+                response_msg = f"For account {account_no}, Stop Loss Market on {side} side for {symbol} modified to {price}."
                 await message.reply(response_msg)
 
             except Exception as e:
-                response_msg = f"There was an error!"
+                response_msg = f"For account {account_no}, There was an error!"
                 await message.reply(response_msg)
 
-        if tag == "cancel_all":
+    elif tag == "cancel_all_open_orders":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
             try:
                 cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
                 cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'STOP_MARKET')
-                response_msg = f"Cancelled all LIMIT and STOP MARKET orders for {symbol}."
+                response_msg = f"For account {account_no}, Cancelled all LIMIT and STOP MARKET orders for {symbol}."
                 await message.reply(response_msg)
             except Exception as e:
-                response_msg = f"There was an error!"
+                response_msg = f"For account {account_no}, There was an error!"
                 await message.reply(response_msg)
 
-        else:
-            message.reply(f"Unknown tag: {tag}")
-            return
+    elif tag == "close_positions_for_symbol":
+
+        for creds in credentials:
+            account_no += 1
+            api_key = creds['API_KEY']
+            secret_key = creds['API_SECRET']
+
+            try:
+                
+                qty = str(qty)
+
+                place_order(api_key, secret_key, symbol, side, 'MARKET', qty)
+                cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'LIMIT')
+                cancel_orders_for_a_symbol(api_key, secret_key, symbol, 'STOP_MARKET')
+                response_msg = f"For account {account_no}, Closed all Positions and Cancelled All Open Orders for {symbol}."
+                await message.reply(response_msg)
+
+            except Exception as e:
+                response_msg = f"There was an error! {e}"
+                await message.reply(response_msg)
+            
+    else:
+        message.reply(f"Unknown tag: {tag}")
+        return
 
 async def main():
     await dp.start_polling(bot)

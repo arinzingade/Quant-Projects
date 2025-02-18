@@ -373,3 +373,31 @@ def position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol):
 
     except Exception as e:
         logger.error(f"Error in fetching position size calculation: {e}")
+
+
+def get_positions(api_key, secret_key, symbol):
+
+    params = {
+        "exchange": "EXCHANGE_2",
+        "symbol": symbol
+    }
+
+    payload = {}
+
+    endpoint = "/trade/api/v2/futures/positions"
+
+    endpoint += ('&', '?')[urlparse(endpoint).query == ''] + urlencode(params)
+
+    url = "https://coinswitch.co" + endpoint
+
+    headers = {
+    'Content-Type': 'application/json',
+    'X-AUTH-SIGNATURE':  generate_signature("GET", endpoint, params, {}, secret_key), 
+    'X-AUTH-APIKEY': api_key
+    }
+
+    try :
+        response = requests.request("GET", url, headers=headers, json=params)
+        print("Response JSON:", response.json())
+    except Exception as e:
+        print(f"An error occurred: {e}")
