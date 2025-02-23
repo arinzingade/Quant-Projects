@@ -9,3 +9,4 @@ renko_strat/.env
 pine_to_view/env.json
 tele_bot/env.json
 tele_bot/.env
+binance_to_cs/.env
