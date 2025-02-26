@@ -1,0 +1,4 @@
+
+services:
+  binance_to_cs:
+    build: .
