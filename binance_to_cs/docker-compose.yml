@@ -1,4 +1,12 @@
 
 services:
-  binance_to_cs:
-    build: .
+  
+  binance_buy:
+    build:
+      context: .
+      dockerfile: DockerfileBuy
+  
+  binance_sell:
+    build:
+      context: .
+      dockerfile: DockerfileSell
