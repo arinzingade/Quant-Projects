@@ -37,6 +37,8 @@ class BinanceOrderBook:
         cancel_all_orders_all_symbols(api_key, secret_key)
         close_all_open_positions_for_symbol(api_key, secret_key, symbol)
 
+        await asyncio.sleep(15)
+
 
     async def listen_order_book(self):
         uri = "wss://stream.binance.com:9443/ws/btcusdt@depth5@100ms"
@@ -83,6 +85,8 @@ class BinanceOrderBook:
 
             place_order(api_key, secret_key, symbol, 'SELL', 'MARKET', qty, self.best_bid_price)
 
+            #await asyncio.sleep(5)
+
         
         if (self.ask_bid_ratio <= int(os.getenv('SELL_SQUARE_OFF_THRESH')) and self.state == "SELL"):
             logger.info(f"State 1: {self.state}")
@@ -101,6 +105,6 @@ class BinanceOrderBook:
             place_order(api_key, secret_key, symbol, 'BUY', 'MARKET', qty)
             logger.info("---------------------------------------------------------------------")
 
-            await asyncio.sleep(7)
+            await asyncio.sleep(10)
 
         return self.bid_ask_ratio, self.ask_bid_ratio

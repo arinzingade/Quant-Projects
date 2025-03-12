@@ -37,6 +37,8 @@ class BinanceOrderBook:
         cancel_all_orders_all_symbols(api_key, secret_key)
         close_all_open_positions_for_symbol(api_key, secret_key, symbol)
 
+        await asyncio.sleep(15)
+
     async def listen_order_book(self):
         uri = "wss://stream.binance.com:9443/ws/btcusdt@depth5@100ms"
         while True:  
@@ -78,6 +80,9 @@ class BinanceOrderBook:
             logger.info(f"Buy Price: {self.best_ask_price}")
 
             place_order(api_key, secret_key, symbol, 'BUY', 'MARKET', qty)
+
+            #await asyncio.sleep(5)
+
         
         if (self.bid_ask_ratio <= int(os.getenv('BUY_SQUARE_OFF_THRESH')) and self.state == "BUY"):
             self.state = "NEUTRAL"
@@ -94,6 +99,6 @@ class BinanceOrderBook:
             place_order(api_key, secret_key, symbol, 'SELL', 'MARKET', qty)
             logger.info("---------------------------------------------------------------------")
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(7)
 
         return self.bid_ask_ratio, self.ask_bid_ratio
