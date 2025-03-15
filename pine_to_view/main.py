@@ -21,7 +21,7 @@ def place_order_method():
     
     try:
         data = request.get_json()
-        if not data:
+        if not data:    
             return jsonify({"error": "No data provided"}), 400
         
         api_key = data.get('api_key')
@@ -33,7 +33,7 @@ def place_order_method():
 
         status = place_order(api_key, secret_key, symbol, side, order_type, qty)
 
-        #clone_orders("env.json", symbol, side, order_type, qty)
+        #clone_orders("env.json", symbol, side, order_type)
 
         #TelegramBot(symbol, side)
 

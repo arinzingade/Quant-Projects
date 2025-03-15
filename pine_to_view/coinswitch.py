@@ -127,3 +127,132 @@ def cancel_all_orders():
 
     print(response.text)
     return response
+
+def get_wallet_balance(api_key, secret_key):
+    endpoint = "/trade/api/v2/futures/wallet_balance"
+    url = f"https://coinswitch.co{endpoint}"
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-AUTH-SIGNATURE': generate_signature("GET", endpoint, {}, {}, secret_key),
+        'X-AUTH-APIKEY': api_key
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response = response.json()
+
+        base_asset_balance = response['data']['base_asset_balances']
+
+        for asset in base_asset_balance:
+            if asset['base_asset'] == 'USDT':
+                usdt_wallet_balance = asset['balances']['total_balance']
+        
+        #print(usdt_wallet_balance)
+        logger.info("Successfully fetched Wallet Balance")
+        return usdt_wallet_balance
+    
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error while fetching Wallet Balance: {e}")
+
+
+def get_24hr_ticker_update(contract_pair):
+
+    if not contract_pair:
+        logging.error("Invalid contract pair. Please enter a valid contract pair (e.g., 'btc', 'eth').")
+        return None
+
+    full_url = f"https://api.pi42.com/v1/market/ticker24Hr/{contract_pair}"
+    logging.info(f"Constructed URL: {full_url}")
+
+    try:
+        response = requests.get(full_url)
+        response.raise_for_status()
+        logging.info(f"Successfully fetched data for contract pair: {contract_pair}")
+        
+        response_data = response.json()
+        return response_data
+
+    except requests.exceptions.HTTPError as err:
+        if err.response:
+            logging.error(f"HTTPError for contract pair {contract_pair}: {err.response.text}")
+        else:
+            logging.error(f"HTTPError: {err}")
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred for contract pair {contract_pair}: {str(e)}")
+
+    return None
+
+def get_current_price(ticker):
+
+    try:
+        data = get_24hr_ticker_update(ticker)
+        if data and "data" in data and "c" in data["data"]:
+            current_price = float(data["data"]["c"])
+            logging.info(f"Current price for {ticker}: {current_price}")
+            return current_price
+        else:
+            logging.warning(f"Price data not found for ticker: {ticker}")
+            return None
+    except Exception as e:
+        logging.exception(f"An error occurred while fetching the current price for {ticker}: {str(e)}")
+        return None
+    
+def get_instrument_info(api_key, secret_key, symbol):
+    params = {"exchange": "EXCHANGE_2"}
+    endpoint = "/trade/api/v2/futures/instrument_info"
+
+    query_string = urlencode(params)
+    url = f"https://coinswitch.co{endpoint}?{query_string}"
+
+    headers = {
+        'Content-Type': 'application/json',
+        'X-AUTH-SIGNATURE': generate_signature("GET", endpoint, params, {}, secret_key),
+        'X-AUTH-APIKEY': api_key
+    }
+
+    try:
+        response = requests.get(url, headers=headers)
+        response = response.json()
+        response = response['data']
+        #print(response[symbol])
+        min_qty = response[symbol]['min_base_quantity']
+        max_leverage = response[symbol]['max_leverage']
+        #print(min_qty)
+
+        logger.info(f"Fetched MIN QTY and MAX Leverage")
+        return float(min_qty), float(max_leverage)
+    
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error to get instrument info: {e}")
+
+
+def position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol):
+    
+    try:
+        # $1000
+        usdt_balance = float(get_wallet_balance(api_key, secret_key))
+
+        # $10
+        risk_capital = usdt_balance * risk_pct
+        #print("Risk Capital: ", risk_capital)
+
+        # $500
+        position_size_usdt = (risk_capital / sl_pct) 
+        #print("Position Size USDT: ", position_size_usdt)
+
+        current_market_price_ticker = get_current_price(symbol)
+
+        min_qty_symbol, max_leverage_coinswitch = get_instrument_info(api_key, secret_key, symbol)
+        #print("Min Qty Symbol: ", min_qty_symbol)
+        #print("Max Leverage from Coinswitch: ", max_leverage_coinswitch)
+
+        qty = max(position_size_usdt / current_market_price_ticker, min_qty_symbol)
+        
+        max_leverage = min(float(position_size_usdt) / float(risk_capital), float(max_leverage_coinswitch))
+
+        logger.info(f"Calculated position size as: {qty} and Levarage as {max_leverage}")
+        return qty, max_leverage
+    
+    except Exception as e:
+        logger.error(f"Error in fetching position size calculation: {e}")
