@@ -39,7 +39,7 @@ def clone_orders(file_path, symbol, side, order_type):
             print(f"Skipping invalid credential entry at index {index}")
             continue
 
-        qty, max_leverage = position_size_calc(api_key, api_secret, risk_pct)
+        qty, max_leverage = position_size_calc(api_key, api_secret, risk_pct, sl_pct)
 
         try:
             response = place_order(
