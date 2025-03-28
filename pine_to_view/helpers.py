@@ -4,7 +4,6 @@ import json
 from dotenv import load_dotenv
 import os
 import logging
-from coinswitch import position_size_calc
 
 load_dotenv()
 
@@ -19,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def clone_orders(file_path, symbol, side, order_type):
+def clone_orders(file_path, symbol, side, order_type, qty):
     qty = 0.002
     try:
         with open(file_path, 'r') as file:
@@ -32,15 +31,12 @@ def clone_orders(file_path, symbol, side, order_type):
     for index, credential in enumerate(credentials):
         api_key = credential.get("API_KEY")
         api_secret = credential.get("API_SECRET")
-        risk_pct = float(credential.get('RISK_PCT'))
-
 
         if not api_key or not api_secret:
             print(f"Skipping invalid credential entry at index {index}")
             continue
 
-        qty, max_leverage = position_size_calc(api_key, api_secret, risk_pct, sl_pct)
-
+        # Place order for each credential
         try:
             response = place_order(
                 api_key=api_key,
