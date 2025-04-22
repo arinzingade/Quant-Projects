@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  buy:
+    build:
+      context: .
+      dockerfile: DockerfileBuy
+    container_name: buy_service
+    restart: unless-stopped
+
+  sell:
+    build:
+      context: .
+      dockerfile: DockerfileSell
+    container_name: sell_service
+    restart: unless-stopped
+
+  buy_controlled:
+    build:
+      context: .
+      dockerfile: DockerfileBuyControlled
+    container_name: buy_controlled_service
+    restart: unless-stopped
+  
+  sell_controlled:
+    build:
+      context: .
+      dockerfile: DockerfileSellControlled
+    container_name: sell_controlled_service
+    restart: unless-stopped

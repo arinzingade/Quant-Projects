@@ -399,10 +399,27 @@ def get_positions(api_key, secret_key, symbol):
     try:
         # Corrected request: Use `params=params` for GET request
         response = requests.get(base_url + endpoint, headers=headers, params=params)
-        return response.json()
+        response = response.json()
+        response = response['data']
+
+        response_json = []
+
+        for pos in response:
+            if pos['status'] == 'OPEN':
+                pos_symbol = pos['symbol']
+                pos_side = pos['position_side']
+                pos_size = pos['position_size']
+
+                response_json.append({ 
+                    'symbol': pos_symbol,
+                    'side': pos_side,
+                    'size': pos_size
+                })
+
+        return response_json
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
         return None
 
 
