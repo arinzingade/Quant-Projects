@@ -1,0 +1,10 @@
+
+pandas 
+numpy 
+stocktrends
+requests
+python-dotenv
+cryptography
+pandas_ta
+matplotlib
+yfinance

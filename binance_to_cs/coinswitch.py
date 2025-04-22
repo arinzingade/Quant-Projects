@@ -76,7 +76,7 @@ def place_order(api_key, secret_key, symbol, side, order_type, qty, price = "950
         "reduce_only": reduce_only         
     }
 
-    print(payload)
+    #print(payload)
 
     headers = {
         'Content-Type': 'application/json',
@@ -375,29 +375,69 @@ def position_size_calc(api_key, secret_key, risk_pct, sl_pct, symbol):
         logger.error(f"Error in fetching position size calculation: {e}")
 
 
+
 def get_positions(api_key, secret_key, symbol):
+    """Fetches open futures positions from Coinswitch API."""
+    
+    base_url = "https://coinswitch.co"
+    endpoint = "/trade/api/v2/futures/positions"
 
     params = {
         "exchange": "EXCHANGE_2",
         "symbol": symbol
     }
 
-    payload = {}
-
-    endpoint = "/trade/api/v2/futures/positions"
-
-    endpoint += ('&', '?')[urlparse(endpoint).query == ''] + urlencode(params)
-
-    url = "https://coinswitch.co" + endpoint
+    # Generate signature correctly
+    signature = generate_signature("GET", endpoint, params, {}, secret_key)
 
     headers = {
-    'Content-Type': 'application/json',
-    'X-AUTH-SIGNATURE':  generate_signature("GET", endpoint, params, {}, secret_key), 
-    'X-AUTH-APIKEY': api_key
+        "Content-Type": "application/json",
+        "X-AUTH-SIGNATURE": signature,  
+        "X-AUTH-APIKEY": api_key
     }
 
-    try :
-        response = requests.request("GET", url, headers=headers, json=params)
-        print("Response JSON:", response.json())
+    try:
+        # Corrected request: Use `params=params` for GET request
+        response = requests.get(base_url + endpoint, headers=headers, params=params)
+        response = response.json()
+        response = response['data']
+
+        response_json = []
+
+        for pos in response:
+            if pos['status'] == 'OPEN':
+                pos_symbol = pos['symbol']
+                pos_side = pos['position_side']
+                pos_size = pos['position_size']
+
+                response_json.append({ 
+                    'symbol': pos_symbol,
+                    'side': pos_side,
+                    'size': pos_size
+                })
+
+        return response_json
+
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error(f"An error occurred: {e}")
+        return None
+
+
+def close_all_open_positions_for_symbol(api_key, secret_key, symbol):
+
+    positions = get_positions(api_key, secret_key, symbol)
+    positions = positions.get('data', None)
+
+    if positions:
+        for pos in positions:
+            position_side = pos['position_side']
+            position_size = pos['position_size']
+
+            if position_side == "LONG":
+                place_order(api_key, secret_key, symbol, 'SELL', 'MARKET', position_size)
+            
+            elif position_side == "SHORT":
+                place_order(api_key, secret_key, symbol, 'BUY', 'MARKET', position_size)
+    
+    else:
+        logger.info("No positions to close")

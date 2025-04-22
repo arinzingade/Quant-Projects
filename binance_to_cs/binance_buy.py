@@ -5,7 +5,8 @@ import logging
 from dotenv import load_dotenv
 import os
 
-from coinswitch import place_order
+from coinswitch import place_order, cancel_all_orders_all_symbols, close_all_open_positions_for_symbol
+import time
 
 load_dotenv()
 
@@ -30,22 +31,35 @@ class BinanceOrderBook:
         self.best_ask_qty = 0
         self.state = "NEUTRAL"
         self.vol = 0
+    
+    async def shutdown(self):
+        logger.info("Closing all open positions and orders...")
+        cancel_all_orders_all_symbols(api_key, secret_key)
+        close_all_open_positions_for_symbol(api_key, secret_key, symbol)
+
+        await asyncio.sleep(15)
 
     async def listen_order_book(self):
         uri = "wss://stream.binance.com:9443/ws/btcusdt@depth5@100ms"
-        async with websockets.connect(uri) as websocket:
-            print("Connected to Binance WebSocket")
-            while True:
-                try:
-                    message = await websocket.recv()
-                    data = json.loads(message)
-                    self.process_order_book(data)
+        while True:  
+            try:
+                async with websockets.connect(uri, ping_interval=20, ping_timeout=30) as websocket:
+                    logger.info("Connected to Binance WebSocket")
+                    while True:
+                        message = await websocket.recv()
+                        data = json.loads(message)
+                        await self.process_order_book(data)  # Await this function now
 
-                except Exception as e:
-                    logger.error(f"Error in Binance WebSocket: {e}")
-                    break
+            except websockets.exceptions.ConnectionClosedError as e:
+                logger.error(f"WebSocket disconnected: {e}. Reconnecting in 5 seconds...")
+                self.shutdown()
+                await asyncio.sleep(1)  
 
-    def process_order_book(self, data):
+            except Exception as e:
+                logger.error(f"Error in WebSocket: {e}. Reconnecting in 5 seconds...")
+                await asyncio.sleep(5)
+
+    async def process_order_book(self, data):
         bids = data.get("bids", [])
         asks = data.get("asks", [])
         if not bids or not asks:
@@ -66,6 +80,9 @@ class BinanceOrderBook:
             logger.info(f"Buy Price: {self.best_ask_price}")
 
             place_order(api_key, secret_key, symbol, 'BUY', 'MARKET', qty)
+
+            #await asyncio.sleep(5)
+
         
         if (self.bid_ask_ratio <= int(os.getenv('BUY_SQUARE_OFF_THRESH')) and self.state == "BUY"):
             self.state = "NEUTRAL"
@@ -80,5 +97,8 @@ class BinanceOrderBook:
             logger.info(f"Volume Generated: {self.vol}")
 
             place_order(api_key, secret_key, symbol, 'SELL', 'MARKET', qty)
+            logger.info("---------------------------------------------------------------------")
+
+            await asyncio.sleep(7)
 
         return self.bid_ask_ratio, self.ask_bid_ratio
